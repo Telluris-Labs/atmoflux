@@ -1,2 +1,8 @@
 # atmoflux
-Python package for working with atmospheric and energy flux data
+
+Atmospheric and energy flux analysis library by Telluris Labs.
+
+## Installation
+
+```bash
+pip install atmoflux
