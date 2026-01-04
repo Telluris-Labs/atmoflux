@@ -9,104 +9,69 @@ atmoflux.temperature
 # Outside imports
 import numpy as np
 
-def convert_to_celsius(temp,unit):
+def convert_temperature(temp, input_unit, output_unit):
     """
-    Convert temperature to Celsius.
+    Convert temperature between Celsius, Fahrenheit, and Kelvin.
     
     Parameters
-    -----
+    ----------
     temp: float
         Temperature value
-    unit: str
-        Unit of temperature: "K" or "F"
-
+    input_unit: str
+        Unit of input temperature: "C", "F", or "K"
+    output_unit: str
+        Unit of output temperature: "C", "F", or "K"
+    
     Returns
-    -----
+    -------
     float
-        Temperature in Celsius
-
+        Temperature in the specified output unit
+    
     Raises
-    -----
+    ------
     ValueError
-        If temp is not numeric or unit is invalid.
+        If temp is not numeric or units are invalid.
+    
+    Examples
+    --------
+    >>> convert_temperature(100, "C", "F")
+    212.0
+    >>> convert_temperature(273.15, "K", "C")
+    0.0
     """
     # Check temp is numeric
-    if not isinstance(temp,(int, float, np.number)):
+    if not isinstance(temp, (int, float, np.number)):
         raise ValueError("Temperature must be numeric.")
     
-    unit = unit.upper()
-    if unit == "K":
-        t_c = temp - 273.15
-    elif unit == "F":
-        t_c = (temp - 32) * 5/9
-    else:
-        raise ValueError("Unit must be 'K' or 'F' when using convert_to_celsius")
-    return t_c
+    # Normalize units to uppercase
+    input_unit = input_unit.upper()
+    output_unit = output_unit.upper()
     
-def convert_to_fahrenheit(temp,unit):
-    """
-    Convert temperature to Fahrenheit.
+    # Validate units
+    valid_units = {"C", "F", "K"}
+    if input_unit not in valid_units:
+        raise ValueError(f"Input unit must be one of {valid_units}")
+    if output_unit not in valid_units:
+        raise ValueError(f"Output unit must be one of {valid_units}")
     
-    Parameters
-    -----
-    temp: float
-        Temperature value
-    unit: str
-        Unit of temperature: "K" or "C"
-
-    Returns
-    -----
-    float
-        Temperature in Fahrenheit
-
-    Raises
-    -----
-    ValueError
-        If temp is not numeric or unit is invalid.
-    """
-    # Check temp is numeric
-    if not isinstance(temp,(int, float, np.number)):
-        raise ValueError("Temperature must be numeric.")
+    # If units are the same, return the temperature as-is
+    if input_unit == output_unit:
+        return temp
     
-    unit = unit.upper()
-    if unit == "K":
-        t_f = (temp - 273.15) * 9/5 + 32
-    elif unit == "C":
-        t_f = (temp * 9/5) + 32
-    else:
-        raise ValueError("Unit must be 'K' or 'C' when using convert_to_fahrenheit") 
-    return t_f
-
-def convert_to_kelvin(temp,unit):
-    """
-    Convert temperature to Kelvin.
+    if input_unit == "C":
+        if output_unit == "F":
+            return temp * 9/5 + 32
+        else:  # output_unit == "K"
+            return temp + 273.15
     
-    Parameters
-    -----
-    temp: float
-        Temperature value
-    unit: str
-        Unit of temperature: "C" or "F"
-
-    Returns
-    -----
-    float
-        Temperature in Kelvin
-
-    Raises
-    -----
-    ValueError
-        If temp is not numeric or unit is invalid.
-    """
-    # Check temp is numeric
-    if not isinstance(temp,(int, float, np.number)):
-        raise ValueError("Temperature must be numeric.")
+    elif input_unit == "F":
+        if output_unit == "C":
+            return (temp - 32) * 5/9
+        else:  # output_unit == "K"
+            return (temp - 32) * 5/9 + 273.15
     
-    unit = unit.upper()
-    if unit == "C":
-        t_k = temp + 273.15
-    elif unit == "F":
-        t_k = (temp - 32) * 5/9 + 273.15
-    else:
-        raise ValueError("Unit must be 'C' or 'F' when using convert_to_kelvin") 
-    return t_k
+    else:  # input_unit == "K"
+        if output_unit == "C":
+            return temp - 273.15
+        else:  # output_unit == "F"
+            return (temp - 273.15) * 9/5 + 32
