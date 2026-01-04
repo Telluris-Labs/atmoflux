@@ -10,9 +10,9 @@ atmoflux.humidity
 import numpy as np
 
 # imports from within atmoflux
-from .temperature import convert_to_celsius
+from .temperature import convert_temperature
 
-def saturation_vp(temp, unit="C"):
+def saturation_vp(temp, unit):
     """
     Saturation vapor pressure of water (kPa) using Tetens formula.
    
@@ -38,7 +38,7 @@ def saturation_vp(temp, unit="C"):
     """
     unit = unit.upper()
     if unit != "C":
-        temp_C = convert_to_celsius(temp, unit)
+        temp_C = convert_temperature(temp, unit, "C")
     else:
         temp_C = temp
     svp = 0.61078 * np.exp((17.27 * temp_C) / (temp_C + 237.3))
@@ -70,7 +70,7 @@ def actual_vp(dewpoint, unit="C"):
     """
     unit = unit.upper()
     if unit != "C":
-        Td_C = convert_to_celsius(dewpoint, unit)
+        Td_C = convert_temperature(dewpoint, unit, "C")
     else:
         Td_C = dewpoint
     avp = 0.61078 * np.exp((17.27 * Td_C) / (Td_C + 237.3))
