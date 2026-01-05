@@ -10,4 +10,19 @@ __email__ = "info@tellurislabs.io"
 __license__ = "MIT"
 __description__ = "Custom tools for climate data processing and analysis"
 
-# Import selected functions and classes to top-level namespace
+# Import modules
+from . import temperature
+from . import humidity
+from . import pressure
+from . import solar
+from . import longwave
+from . import wind
+
+__all__ = [
+    'temperature',
+    'humidity', 
+    'pressure',
+    'solar',
+    'longwave',
+    'wind',
+]
