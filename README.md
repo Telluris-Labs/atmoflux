@@ -7,17 +7,17 @@ Atmospheric and energy flux analysis library by Telluris Labs.
 
 * cd to location where you want to save the cloned repository
 
-* Clone the repository
+* Clone the repository:
 ```bash
 git clone https://github.com/TellurisLabs/atmoflux.git
 ```
 * cd to the location of the outer atmoflux folder
 
-* For regular installation 
+* For regular installation: 
 ```bash
 pip install .
 ```
-* For editable installation 
+* For editable installation: 
 ```bash
 pip install -e .
 ```
