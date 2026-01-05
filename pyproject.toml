@@ -1,21 +1,33 @@
 [project]
 name = "atmoflux"
-version = "0.0.1"
+dynamic = ["version"]
 description = "Atmospheric and energy flux analysis library by Telluris Labs"
 readme = "README.md"
 requires-python = ">=3.9"
-dependencies = ["numpy>=1.22"]
+dependencies = [
+    "numpy>=1.22"
+]
 license = { text = "MIT" }
 authors = [
     { name = "Telluris Labs", email = "info@tellurislabs.io" }
 ]
 keywords = ["climate","meteorology", "energy flux", "humidity", "temperature", "thermal"]
+
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent"
+    "Operating System :: OS Independent",
+    "Intended Audience :: Science/Research"   
 ]
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["atmoflux*"]
+exclude = ["tests*"]
+
+[tool.setuptools.dynamic]
+version = {attr = "atmoflux.__version__"}
