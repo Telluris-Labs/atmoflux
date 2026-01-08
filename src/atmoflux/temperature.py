@@ -34,6 +34,10 @@ def convert_temperature(temp: float, input_unit: str, output_unit: str) -> float
     212.0
     >>> convert_temperature(273.15, "K", "C")
     0.0
+    >>> a, b, c = 80,"F","C"
+    >>> temp = convert_temperature(a, b, c)
+    >>> print(f"{a}°{b} is equal to {round(temp,2)}°{c}.")
+    80°F is equal to 26.67°C.
     """
     # Check temp is numeric
     if not isinstance(temp, (int, float, np.number)):
