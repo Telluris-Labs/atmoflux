@@ -12,24 +12,20 @@ import numpy as np
 # imports from within atmoflux
 from .temperature import convert_temperature
 
-def saturation_vp(temp, unit):
+def saturation_vp(temp: float, unit: str = "C") -> float:
     """
     Saturation vapor pressure of water (kPa) using Tetens formula.
    
     Parameters
     -----
-    temp: float
-        Air temperature.
-    unit: str, optional
-        Unit of temperature. Options:
-        - "C" for Celsius (default)
+    temp: Air temperature.
+    unit: Unit of temperature. "C", "F", or "K" (default is "C").
         - "K" for Kelvin
         - "F" for Fahrenheit
     
     Returns
     -----
-    float
-        Saturation vapor pressure of water in kilopascals (kPa).
+    Saturation vapor pressure of water in kilopascals (kPa).
 
     Raises
     -----
@@ -44,24 +40,19 @@ def saturation_vp(temp, unit):
     svp = 0.61078 * np.exp((17.27 * temp_C) / (temp_C + 237.3))
     return svp
 
-def actual_vp(dewpoint, unit="C"):
+def actual_vp(dewpoint: float, unit: str = "C") -> float:
     """
     Actual vapor pressure of water (kPa) from dew point using Tetens formula.
 
     Parameters
     -----
-    dewpoint: float
-        Dew point temperature.
-    unit: str, optional
-        Unit of temperature. Options:
-        - "C" for Celsius (default)
-        - "K" for Kelvin
-        - "F" for Fahrenheit
+    dewpoint: Dew point temperature.
+    unit: Unit of temperature. Options: "C', "F", or "K" (default is "C").
+
     
     Returns
     -----
-    float
-        Actual vapor pressure of water in kilopascals (kPa).
+    Actual vapor pressure of water in kilopascals (kPa).
 
     Raises
     -----
