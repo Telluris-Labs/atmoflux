@@ -9,23 +9,19 @@ atmoflux.temperature
 # Outside imports
 import numpy as np
 
-def convert_temperature(temp, input_unit, output_unit):
+def convert_temperature(temp: float, input_unit: str, output_unit: str) -> float:
     """
     Convert temperature between Celsius, Fahrenheit, and Kelvin.
     
     Parameters
     ----------
-    temp: float
-        Temperature value
-    input_unit: str
-        Unit of input temperature: "C", "F", or "K"
-    output_unit: str
-        Unit of output temperature: "C", "F", or "K"
+    temp : Temperature value.
+    input_unit : Unit of input temperature: "C", "F", or "K".
+    output_unit : Unit of output temperature: "C", "F", or "K".
     
     Returns
     -------
-    float
-        Temperature in the specified output unit
+    Temperature in the specified output unit.
     
     Raises
     ------
@@ -76,7 +72,7 @@ def convert_temperature(temp, input_unit, output_unit):
         else:  # output_unit == "F"
             return (temp - 273.15) * 9/5 + 32
         
-def dewpoint_temperature(temp, rh, unit="C"):
+def dewpoint_temperature(temp: float, rh: float, unit: str ="C") -> float:
     """
     Calculate dew point temperature from temperature and relative humidity.
     
@@ -84,17 +80,13 @@ def dewpoint_temperature(temp, rh, unit="C"):
     
     Parameters
     ----------
-    temp : float
-        Air temperature.
-    rh : float
-        Relative humidity (%)
-    unit : str, optional
-        Unit of input/output temperature: "C", "F", or "K" (default is "C").
+    temp : Air temperature.
+    rh : Relative humidity (%).
+    unit : Unit of input/output temperature: "C", "F", or "K" (default is "C").
     
     Returns
     -------
-    float
-        Dew point temperature in the same unit as input.
+    Dew point temperature in the same unit as input.
     
     Notes
     -----
@@ -141,21 +133,18 @@ def dewpoint_temperature(temp, rh, unit="C"):
     else:
         return Td_C
 
-def dewpoint_from_avp(avp, unit="C"):
+def dewpoint_from_avp(avp: float, unit: str ="C") -> float:
     """
     Calculate dew point temperature from actual vapor pressure.
     
     Parameters
     ----------
-    avp : float
-        Actual vapor pressure (kPa)
-    unit : str, optional
-        Unit of output temperature: "C", "F", or "K" (default is "C")
+    avp : Actual vapor pressure (kPa).
+    unit: Unit of output temperature: "C", "F", or "K" (default is "C").
     
     Returns
     -------
-    float
-        Dew point temperature in specified unit
+    Dew point temperature in specified unit
     """
     # Calculate dew point in Celsius using the inverse of the saturation vapor pressure formula
     Td_C = (237.3 * np.log(avp / 0.61078)) / (17.27 - np.log(avp / 0.61078))
