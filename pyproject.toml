@@ -13,10 +13,17 @@ authors = [
 ]
 keywords = ["climate","meteorology", "energy flux", "humidity", "temperature", "thermal"]
 
+keywords = ["atmospheric science","climate science","micrometeorology","surface energy balance","land-atmosphere exchange",
+    "energy fluxes", "radiative fluxes","turbulent fluxes","hydrological fluxes","boundary layer","urban climate"
+]
+
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
-    "Intended Audience :: Science/Research"   
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Atmospheric Science",
+    "Topic :: Scientific/Engineering :: Environmental Science",
+    "Topic :: Scientific/Engineering :: Earth Sciences"   
 ]
 
 [build-system]
