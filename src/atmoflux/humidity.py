@@ -1,7 +1,8 @@
 """
 atmoflux.humidity
 =================
-
+Contains functions and derived variables related to atmospheric moisture. 
+Includes relative humidity, specific humidity, mixing ratio, vapor pressure, and saturation calculations.
 
 """
 # Standard imports

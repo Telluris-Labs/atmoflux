@@ -1,7 +1,8 @@
 """
 atmoflux.temperature
 =================
-
+Provides functions and derived variables related to atmospheric and surface temperature. 
+Includes air temperature, surface temperature, potential and virtual temperature, and lapse rates.
 
 """
 # Standard imports
