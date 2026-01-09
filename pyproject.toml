@@ -11,7 +11,6 @@ license = { text = "MIT" }
 authors = [
     { name = "Telluris Labs", email = "info@tellurislabs.io" }
 ]
-keywords = ["climate","meteorology", "energy flux", "humidity", "temperature", "thermal"]
 
 keywords = ["atmospheric science","climate science","micrometeorology","surface energy balance","land-atmosphere exchange",
     "energy fluxes", "radiative fluxes","turbulent fluxes","hydrological fluxes","boundary layer","urban climate"
