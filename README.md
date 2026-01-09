@@ -1,5 +1,5 @@
 # atmoflux
-A Python package for atmospheric and surface flux calculation and analysis
+A Python package for atmospheric and surface flux calculation and analysis.
 
 ## Abstract
 **atmoflux** is a Python library for atmospheric and surface flux calculations relevant to climate, micrometeorology, and urban environmental research. The package provides modular tools for radiative, turbulent, hydrological, aerosol, and energy balance calculations, alongside supporting utilities for atmospheric state variables and physical constants.
