@@ -7,11 +7,11 @@ requires-python = ">=3.9"
 dependencies = [
     "numpy>=1.22"
 ]
-license = { text = "MIT" }
-authors = [
-    { name = "Telluris Labs", email = "info@tellurislabs.io" }
-]
 
+author = "Telluris Labs"
+author-email = "info@tellurislabs.io"
+homepage = "https://tellurislabs.io"
+license = { text = "MIT" }
 keywords = ["atmospheric science","climate science","micrometeorology","surface energy balance","land-atmosphere exchange",
     "energy fluxes", "radiative fluxes","turbulent fluxes","hydrological fluxes","boundary layer","urban climate"
 ]
