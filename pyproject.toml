@@ -21,8 +21,7 @@ classifiers = [
     "Operating System :: OS Independent",
     "Intended Audience :: Science/Research",
     "Topic :: Scientific/Engineering :: Atmospheric Science",
-    "Topic :: Scientific/Engineering :: Environmental Science",
-    "Topic :: Scientific/Engineering :: Earth Sciences"   
+    "Topic :: Scientific/Engineering :: Hydrology"   
 ]
 
 [build-system]
