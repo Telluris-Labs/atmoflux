@@ -11,6 +11,7 @@ Includes relative humidity, specific humidity, mixing ratio, vapor pressure, and
 import numpy as np
 
 # imports from within atmoflux
+from .constants import *
 from .temperature import convert_temperature
 
 def saturation_vp(temp: float, unit: str = "C") -> float:
@@ -38,7 +39,7 @@ def saturation_vp(temp: float, unit: str = "C") -> float:
         temp_C = convert_temperature(temp, unit, "C")
     else:
         temp_C = temp
-    svp = 0.61078 * np.exp((17.27 * temp_C) / (temp_C + 237.3))
+    svp = SVP_A * np.exp((SVP_B * temp_C) / (temp_C + SVP_C))
     return svp
 
 def actual_vp(dewpoint: float, unit: str = "C") -> float:
@@ -65,5 +66,5 @@ def actual_vp(dewpoint: float, unit: str = "C") -> float:
         Td_C = convert_temperature(dewpoint, unit, "C")
     else:
         Td_C = dewpoint
-    avp = 0.61078 * np.exp((17.27 * Td_C) / (Td_C + 237.3))
+    avp = SVP_A * np.exp((SVP_B * Td_C) / (Td_C + SVP_C))
     return avp
