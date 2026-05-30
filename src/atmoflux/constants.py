@@ -22,7 +22,7 @@ CP_AIR = 1005.0
 # Units: J/kg
 LV = 2.45e6  
 
-# Psychometric Constant
+# Psychrometric Constant
 # Relates the change in air temperature to the change in vapor pressure during evaporation
 # Sea-level approximation; the true value scales with pressure as
 # gamma = CP_AIR * P / (RMW * LV). Modules needing precision compute it from pressure.
