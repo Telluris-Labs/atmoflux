@@ -2,13 +2,21 @@
 atmoflux.temperature
 =================
 Provides functions and derived variables related to atmospheric and surface temperature. 
-Includes air temperature, surface temperature, potential and virtual temperature, and lapse rates.
+Includes unit conversion, dew point, potential and virtual temperature, lapse
+rate, and surface temperature retrieved from upwelling longwave radiation.
 
 """
-# Standard imports
+from __future__ import annotations
 
 # Outside imports
 import numpy as np
+
+# imports from within atmoflux
+from .constants import CP_AIR, R_AIR, P0, STEFAN_BOLTZMANN
+from .exceptions import InvalidUnitError, OutOfRangeError, ValidationError
+
+_VALID_UNITS = {"C", "F", "K"}
+
 
 def convert_temperature(temp: float, input_unit: str, output_unit: str) -> float:
     """
@@ -16,7 +24,7 @@ def convert_temperature(temp: float, input_unit: str, output_unit: str) -> float
     
     Parameters
     ----------
-    temp : Temperature value.
+    temp : Temperature value (scalar or array-like).
     input_unit : Unit of input temperature: "C", "F", or "K".
     output_unit : Unit of output temperature: "C", "F", or "K".
     
@@ -26,34 +34,39 @@ def convert_temperature(temp: float, input_unit: str, output_unit: str) -> float
     
     Raises
     ------
-    ValueError
-        If temp is not numeric or units are invalid.
-    
+    ValidationError
+        If temp is not numeric.
+    InvalidUnitError
+        If input_unit or output_unit is not "C", "F", or "K".
+
     Examples
     --------
     >>> convert_temperature(100, "C", "F")
     212.0
     >>> convert_temperature(273.15, "K", "C")
     0.0
-    >>> a, b, c = 80,"F","C"
+    >>> a, b, c = 80, "F", "C"
     >>> temp = convert_temperature(a, b, c)
-    >>> print(f"{a}°{b} is equal to {round(temp,2)}°{c}.")
+    >>> print(f"{a}°{b} is equal to {round(temp, 2)}°{c}.")
     80°F is equal to 26.67°C.
     """
-    # Check temp is numeric
-    if not isinstance(temp, (int, float, np.number)):
-        raise ValueError("Temperature must be numeric.")
+    # Check temp is numeric (scalars or numeric arrays)
+    if not isinstance(temp, (int, float, np.number, np.ndarray, list, tuple)):
+        raise ValidationError("Temperature must be numeric.")
+    if isinstance(temp, (list, tuple)):
+        temp = np.asarray(temp, dtype=float)
+    if isinstance(temp, np.ndarray) and not np.issubdtype(temp.dtype, np.number):
+        raise ValidationError("Temperature must be numeric.")
     
     # Normalize units to uppercase
     input_unit = input_unit.upper()
     output_unit = output_unit.upper()
     
     # Validate units
-    valid_units = {"C", "F", "K"}
-    if input_unit not in valid_units:
-        raise ValueError(f"Input unit must be one of {valid_units}")
-    if output_unit not in valid_units:
-        raise ValueError(f"Output unit must be one of {valid_units}")
+    if input_unit not in _VALID_UNITS:
+        raise InvalidUnitError(f"Input unit must be one of {_VALID_UNITS}")
+    if output_unit not in _VALID_UNITS:
+        raise InvalidUnitError(f"Output unit must be one of {_VALID_UNITS}")
     
     # If units are the same, return the temperature as-is
     if input_unit == output_unit:
@@ -61,22 +74,23 @@ def convert_temperature(temp: float, input_unit: str, output_unit: str) -> float
     
     if input_unit == "C":
         if output_unit == "F":
-            return temp * 9/5 + 32
+            return temp * 9 / 5 + 32
         else:  # output_unit == "K"
             return temp + 273.15
     
     elif input_unit == "F":
         if output_unit == "C":
-            return (temp - 32) * 5/9
+            return (temp - 32) * 5 / 9
         else:  # output_unit == "K"
-            return (temp - 32) * 5/9 + 273.15
+            return (temp - 32) * 5 / 9 + 273.15
     
     else:  # input_unit == "K"
         if output_unit == "C":
             return temp - 273.15
         else:  # output_unit == "F"
-            return (temp - 273.15) * 9/5 + 32
+            return (temp - 273.15) * 9 / 5 + 32
         
+
 def dewpoint_temperature(temp: float, rh: float, unit: str ="C") -> float:
     """
     Calculate dew point temperature from temperature and relative humidity.
@@ -93,27 +107,34 @@ def dewpoint_temperature(temp: float, rh: float, unit: str ="C") -> float:
     -------
     Dew point temperature in the same unit as input.
     
+    Raises
+    ------
+    OutOfRangeError
+        If rh is not in the interval (0, 100].
+    InvalidUnitError
+        If unit is invalid.
+
     Notes
     -----
     Uses the Magnus-Tetens approximation:
     Td = (b * alpha) / (a - alpha)
     where alpha = ln(RH/100) + (a*T)/(b+T)
     Constants: a = 17.27, b = 237.3°C
-    
+
     Valid for:
     - Temperature range: -40°C to 50°C
     - Relative humidity: 1% to 100%
-    
+
     Examples
     --------
-    >>> dewpoint_temperature(30, 50)
-    18.44...
-    >>> dewpoint_temperature(86, 50, unit="F")
-    65.19...
+    >>> print(round(dewpoint_temperature(30, 50), 2))
+    18.44
+    >>> print(round(dewpoint_temperature(86, 50, unit="F"), 2))
+    65.19
     """
     # Validate relative humidity
-    if not 0 < rh <= 100:
-        raise ValueError("Relative humidity must be between 0 and 100%")
+    if np.any(rh <= 0) or np.any(rh > 100):
+        raise OutOfRangeError("Relative humidity must be between 0 and 100%")
     
     # Convert temperature to Celsius for calculation
     unit = unit.upper()
@@ -138,6 +159,7 @@ def dewpoint_temperature(temp: float, rh: float, unit: str ="C") -> float:
     else:
         return Td_C
 
+
 def dewpoint_from_avp(avp: float, unit: str ="C") -> float:
     """
     Calculate dew point temperature from actual vapor pressure.
@@ -150,9 +172,25 @@ def dewpoint_from_avp(avp: float, unit: str ="C") -> float:
     Returns
     -------
     Dew point temperature in specified unit
+
+    Raises
+    ------
+    OutOfRangeError
+        If avp is not strictly positive.
+    InvalidUnitError
+        If unit is invalid.
+
+    Examples
+    --------
+    >>> print(round(dewpoint_from_avp(2.338), 2))
+    20.0
     """
-    # Calculate dew point in Celsius using the inverse of the saturation vapor pressure formula
-    Td_C = (237.3 * np.log(avp / 0.61078)) / (17.27 - np.log(avp / 0.61078))
+    if np.any(avp <= 0):
+        raise OutOfRangeError("Actual vapor pressure must be positive.")
+
+    # Invert the Tetens saturation vapor pressure formula
+    ln_ratio = np.log(avp / 0.61078)
+    Td_C = (237.3 * ln_ratio) / (17.27 - ln_ratio)
     
     # Convert to desired unit if necessary
     unit = unit.upper()
@@ -160,3 +198,212 @@ def dewpoint_from_avp(avp: float, unit: str ="C") -> float:
         return convert_temperature(Td_C, "C", unit)
     else:
         return Td_C
+
+
+def potential_temperature(
+    temp: float,
+    pressure: float,
+    reference_pressure: float = P0,
+    unit: str = "K",
+) -> float:
+    """
+    Calculate potential temperature of dry air.
+
+    Potential temperature is the temperature a parcel of dry air would have if
+    brought adiabatically to a reference pressure (sea level by default). It is
+    conserved under dry adiabatic processes and is widely used to compare air at
+    different altitudes.
+
+    Parameters
+    ----------
+    temp : Air temperature.
+    pressure : Ambient pressure (kPa).
+    reference_pressure : Reference pressure (kPa), default sea-level P0.
+    unit : Unit of input/output temperature: "C", "F", or "K" (default "K").
+
+    Returns
+    -------
+    Potential temperature in the same unit as the input temperature.
+
+    Raises
+    ------
+    OutOfRangeError
+        If pressure or reference_pressure is not strictly positive.
+    InvalidUnitError
+        If unit is invalid.
+
+    Notes
+    -----
+    Poisson's equation for dry air:
+    theta = T * (P0 / P) ** (R_air / cp)
+
+    The exponent R_air / cp ≈ 0.286 for dry air. The calculation is performed in
+    Kelvin and converted back to the requested unit.
+
+    Examples
+    --------
+    >>> print(round(potential_temperature(273.15, 80.0), 2))
+    292.22
+    >>> print(round(potential_temperature(0.0, 80.0, unit="C"), 2))
+    19.07
+    """
+    if np.any(pressure <= 0) or np.any(reference_pressure <= 0):
+        raise OutOfRangeError("Pressure values must be positive.")
+
+    temp_K = convert_temperature(temp, unit.upper(), "K")
+    theta_K = temp_K * (reference_pressure / pressure) ** (R_AIR / CP_AIR)
+
+    return convert_temperature(theta_K, "K", unit.upper())
+
+
+def virtual_temperature(temp: float, mixing_ratio: float, unit: str = "K") -> float:
+    """
+    Calculate virtual temperature of moist air.
+
+    Virtual temperature is the temperature dry air would need to have the same
+    density as a given sample of moist air at the same pressure. It accounts for
+    the lower density of water vapor relative to dry air.
+
+    Parameters
+    ----------
+    temp : Air temperature.
+    mixing_ratio : Water vapor mixing ratio (kg/kg).
+    unit : Unit of input/output temperature: "C", "F", or "K" (default "K").
+
+    Returns
+    -------
+    Virtual temperature in the same unit as the input temperature.
+
+    Raises
+    ------
+    OutOfRangeError
+        If mixing_ratio is negative.
+    InvalidUnitError
+        If unit is invalid.
+
+    Notes
+    -----
+    Approximation:
+    Tv = T * (1 + 0.61 * w)
+    where w is the mixing ratio in kg/kg and T is in Kelvin. The coefficient
+    0.61 ≈ (1 - RMW) / RMW.
+
+    Examples
+    --------
+    >>> round(virtual_temperature(300.0, 0.01), 3)
+    301.83
+    """
+    if np.any(mixing_ratio < 0):
+        raise OutOfRangeError("Mixing ratio must be non-negative.")
+
+    temp_K = convert_temperature(temp, unit.upper(), "K")
+    tv_K = temp_K * (1 + 0.61 * mixing_ratio)
+
+    return convert_temperature(tv_K, "K", unit.upper())
+
+
+def lapse_rate(
+    temp_lower: float,
+    temp_upper: float,
+    height_lower: float,
+    height_upper: float,
+    unit: str = "C",
+) -> float:
+    """
+    Calculate the environmental lapse rate between two heights.
+
+    The environmental lapse rate is the rate of temperature decrease with
+    height. It is positive when temperature decreases with altitude (the usual
+    tropospheric case) and negative under a temperature inversion.
+
+    Parameters
+    ----------
+    temp_lower : Temperature at the lower height.
+    temp_upper : Temperature at the upper height.
+    height_lower : Lower height (m).
+    height_upper : Upper height (m), must differ from height_lower.
+    unit : Unit of the input temperatures: "C", "F", or "K" (default "C").
+
+    Returns
+    -------
+    Lapse rate in degrees (of the input unit, or K for "K") per meter. Multiply
+    by 1000 to express the result per kilometer.
+
+    Raises
+    ------
+    OutOfRangeError
+        If the two heights are equal.
+    InvalidUnitError
+        If unit is invalid.
+
+    Notes
+    -----
+    Gamma = -(T_upper - T_lower) / (z_upper - z_lower)
+
+    Temperatures are converted to Kelvin for the difference so that the
+    magnitude is consistent for "C" and "K" inputs; the returned value carries
+    the same per-degree size as Celsius/Kelvin. For Fahrenheit inputs the result
+    is reported in K/m.
+
+    Examples
+    --------
+    >>> round(lapse_rate(15.0, 8.5, 0.0, 1000.0) * 1000, 1)
+    6.5
+    """
+    if np.any(height_upper == height_lower):
+        raise OutOfRangeError("Upper and lower heights must differ.")
+
+    t_lower_K = convert_temperature(temp_lower, unit.upper(), "K")
+    t_upper_K = convert_temperature(temp_upper, unit.upper(), "K")
+
+    return -(t_upper_K - t_lower_K) / (height_upper - height_lower)
+
+
+def surface_temperature_from_lw(
+    lw_up: float, emissivity: float = 1.0, unit: str = "K"
+) -> float:
+    """
+    Retrieve surface temperature from upwelling longwave radiation.
+
+    Inverts the Stefan-Boltzmann law to estimate the radiating (skin)
+    temperature of a surface given its upwelling longwave flux and emissivity.
+
+    Parameters
+    ----------
+    lw_up : Upwelling longwave radiative flux (W/m²), must be positive.
+    emissivity : Surface emissivity in (0, 1] (default 1.0 for a blackbody).
+    unit : Unit of output temperature: "C", "F", or "K" (default "K").
+
+    Returns
+    -------
+    Surface temperature in the requested unit.
+
+    Raises
+    ------
+    OutOfRangeError
+        If lw_up is not positive or emissivity is outside (0, 1].
+    InvalidUnitError
+        If unit is invalid.
+
+    Notes
+    -----
+    Inverse Stefan-Boltzmann law:
+    Ts = (LW_up / (emissivity * sigma)) ** 0.25
+    with sigma the Stefan-Boltzmann constant. Ts is computed in Kelvin and
+    converted to the requested unit.
+
+    Examples
+    --------
+    >>> print(round(surface_temperature_from_lw(390.0), 2))
+    287.98
+    >>> print(round(surface_temperature_from_lw(390.0, unit="C"), 2))
+    14.83
+    """
+    if np.any(lw_up <= 0):
+        raise OutOfRangeError("Upwelling longwave flux must be positive.")
+    if np.any(emissivity <= 0) or np.any(emissivity > 1):
+        raise OutOfRangeError("Emissivity must be in the interval (0, 1].")
+
+    ts_K = (lw_up / (emissivity * STEFAN_BOLTZMANN)) ** 0.25
+
+    return convert_temperature(ts_K, "K", unit.upper())
