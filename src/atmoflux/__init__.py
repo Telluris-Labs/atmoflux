@@ -29,6 +29,7 @@ from . import balance
 
 # Shared core abstractions
 from . import core
+from . import exceptions
 
 __all__ = [
     "temperature",
@@ -41,4 +42,5 @@ __all__ = [
     "aerosols",
     "balance",
     "core",
+    "exceptions",
 ]
