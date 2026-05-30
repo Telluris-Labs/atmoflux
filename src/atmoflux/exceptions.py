@@ -7,12 +7,6 @@ Errors raised by atmoflux derive from :class:`AtmofluxError`, allowing
 callers to catch any package-specific failure with a single ``except`` clause.
 Specific subclasses cover unit, range, and validation failures.
 """
-# Standard imports
-
-# Outside imports
-
-# imports from within atmoflux
-
 
 class AtmofluxError(Exception):
     """
