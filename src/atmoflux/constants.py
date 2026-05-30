@@ -1,13 +1,15 @@
 """
 atmoflux.constants
 =================
-Provides physical and derived constants used across the package. 
-Includes psychrometric constants, molecular ratios, latent heats, and other shared parameters.
+Provides physical and derived constants used across the package.
+Includes psychrometric constants, molecular ratios, latent heats, radiative and
+turbulent-transfer constants, and aerosol microphysical parameters. All
+pressures and vapor pressures in atmoflux are expressed in kilopascals (kPa).
 
 """
 
 '''
-Psychometric Constants
+Psychrometric Constants
 Thermodynamic properties defining the relationship between moisture and air temperature.
 '''
 # Specific heat of dry air at constant pressure
@@ -22,13 +24,20 @@ LV = 2.45e6
 
 # Psychometric Constant
 # Relates the change in air temperature to the change in vapor pressure during evaporation
-# Units: hPa/K
-PC = 0.66
+# Sea-level approximation; the true value scales with pressure as
+# gamma = CP_AIR * P / (RMW * LV). Modules needing precision compute it from pressure.
+# Units: kPa/K
+PC = 0.066
 
 # Specific gas constant for dry air
 # Relates pressure, density, and temperature for dry air
 # Units: J/(kg·K)
-R_AIR = 287.058  
+R_AIR = 287.058
+
+# Specific gas constant for water vapor
+# Relates pressure, density, and temperature for water vapor
+# Units: J/(kg·K)
+R_VAPOR = 461.5
 
 # Ratio of the molecular weight of water vapor to dry air
 # Units: Dimensionless factor used in humidity calculations
@@ -39,3 +48,51 @@ RMW = 0.622
 SVP_A = 0.61078
 SVP_B = 17.27
 SVP_C = 237.3
+
+'''
+Radiative Constants
+Parameters governing shortwave and longwave radiative transfer.
+'''
+# Stefan-Boltzmann constant
+# Relates blackbody radiant emittance to the fourth power of absolute temperature
+# Units: W/(m²·K⁴)
+STEFAN_BOLTZMANN = 5.670374419e-8
+
+# Solar constant
+# Mean top-of-atmosphere solar irradiance at 1 astronomical unit
+# Units: W/m²
+SOLAR_CONSTANT = 1361.0
+
+'''
+Turbulent-Transfer and Reference Constants
+Parameters used in surface-layer flux and profile calculations.
+'''
+# von Kármán constant
+# Empirical constant in the logarithmic wind profile and flux-gradient relations
+# Units: dimensionless
+KARMAN = 0.40
+
+# Standard gravitational acceleration
+# Units: m/s²
+G = 9.80665
+
+# Standard sea-level atmospheric pressure
+# Units: kPa
+P0 = 101.325
+
+# Density of liquid water
+# Used to convert latent heat flux to an equivalent depth of water
+# Units: kg/m³
+RHO_WATER = 1000.0
+
+'''
+Aerosol Microphysical Constants
+Properties of air controlling particle settling and deposition.
+'''
+# Dynamic viscosity of air at ~15 °C
+# Units: Pa·s
+MU_AIR = 1.81e-5
+
+# Mean free path of air molecules at sea level and ~15 °C
+# Units: m
+MFP_AIR = 6.6e-8
