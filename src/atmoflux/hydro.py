@@ -14,7 +14,7 @@ from __future__ import annotations
 import numpy as np
 
 # imports from within atmoflux
-from .constants import CP_AIR, LV, RMW, RHO_WATER, P0
+from .constants import CP_AIR, LV, RMW, RHO_WATER, P0, PRIESTLEY_TAYLOR_ALPHA
 from .exceptions import OutOfRangeError
 from .humidity import saturation_vp_slope
 from .temperature import convert_temperature
@@ -55,13 +55,21 @@ def latent_heat_to_evaporation(
     """
     if np.any(density_water <= 0):
         raise OutOfRangeError("Water density must be positive.")
+    
     e_m_per_s = latent_heat / (LV * density_water)
-    return e_m_per_s * 1000.0 * _SECONDS_PER_DAY
+    evap = e_m_per_s * 1000.0 * _SECONDS_PER_DAY
+
+    return evap
 
 
 def _psychrometric_constant(pressure: float) -> float:
-    """Psychrometric constant (kPa/°C) at a given pressure (kPa)."""
-    return CP_AIR * pressure / (RMW * LV)
+    """
+    Psychrometric constant (kPa/°C) at a given pressure (kPa).
+    For more precise calculation when pressure is known.
+    """
+    cp = CP_AIR * pressure / (RMW * LV)
+
+    return cp
 
 
 def penman_evaporation(
@@ -125,7 +133,9 @@ def penman_evaporation(
 
     aerodynamic = 6.43 * (1 + 0.536 * wind_2m) * (es - ea)
     numerator = delta * (net_radiation - ground_heat) + gamma * aerodynamic
-    return numerator / (lam * (delta + gamma))
+    pe = numerator / (lam * (delta + gamma))
+
+    return pe
 
 
 def penman_monteith(
@@ -197,7 +207,9 @@ def penman_monteith(
     numerator = delta * available + density * CP_AIR * vpd_pa / resistance_aero
     denominator = delta + gamma * (1 + resistance_surface / resistance_aero)
     latent_heat = numerator / denominator
-    return latent_heat_to_evaporation(latent_heat)
+    pm = latent_heat_to_evaporation(latent_heat)
+
+    return pm
 
 
 def potential_evapotranspiration(
@@ -260,4 +272,173 @@ def potential_evapotranspiration(
     radiation_term = 0.408 * delta * (net_radiation - ground_heat)
     aero_term = gamma * (900.0 / (temp_C + 273.0)) * wind_2m * (es - ea)
     denominator = delta + gamma * (1 + 0.34 * wind_2m)
-    return (radiation_term + aero_term) / denominator
+    p_evap = (radiation_term + aero_term) / denominator
+
+    return p_evap
+
+
+def equilibrium_evaporation(
+    net_radiation: float,
+    ground_heat: float,
+    temp: float,
+    pressure: float = P0,
+    unit: str = "C",
+) -> float:
+    """
+    Equilibrium evaporation from available energy.
+
+    Equilibrium evaporation is the evaporation a saturated surface would sustain
+    under conditions of minimal advection, depending only on available energy and
+    the temperature-dependent partitioning between sensible and latent heat.
+
+    Parameters
+    ----------
+    net_radiation : Net radiation Rn (MJ/m²/day).
+    ground_heat : Ground heat flux G (MJ/m²/day).
+    temp : Mean air temperature.
+    pressure : Atmospheric pressure (kPa), default sea-level P0.
+    unit : Unit of temp: "C", "F", or "K" (default "C").
+
+    Returns
+    -------
+    Equilibrium evaporation in mm/day.
+
+    Raises
+    ------
+    InvalidUnitError
+        If unit is invalid.
+
+    Notes
+    -----
+    E_eq = [delta / (delta + gamma)] * (Rn - G) / lambda
+    with delta the slope of the saturation vapor pressure curve, gamma the
+    psychrometric constant, and lambda the latent heat of vaporization (MJ/kg).
+
+    Examples
+    --------
+    >>> print(round(equilibrium_evaporation(15.0, 0.0, 25.0), 3))
+    4.521
+    """
+    temp_C = convert_temperature(temp, unit.upper(), "C")
+    delta = saturation_vp_slope(temp_C, "C")
+    gamma = _psychrometric_constant(pressure)
+    lam = LV / 1.0e6  # latent heat in MJ/kg
+    eq_evap = (delta / (delta + gamma)) * (net_radiation - ground_heat) / lam
+
+    return eq_evap
+
+
+def priestley_taylor(
+    net_radiation: float,
+    ground_heat: float,
+    temp: float,
+    alpha: float = PRIESTLEY_TAYLOR_ALPHA,
+    pressure: float = P0,
+    unit: str = "C",
+) -> float:
+    """
+    Priestley-Taylor evaporation.
+
+    Scales equilibrium evaporation by an empirical coefficient to estimate
+    actual evaporation from well-watered surfaces under minimal advection.
+
+    Parameters
+    ----------
+    net_radiation : Net radiation Rn (MJ/m²/day).
+    ground_heat : Ground heat flux G (MJ/m²/day).
+    temp : Mean air temperature.
+    alpha : Priestley-Taylor coefficient (default from constants, ~1.26).
+    pressure : Atmospheric pressure (kPa), default sea-level P0.
+    unit : Unit of temp: "C", "F", or "K" (default "C").
+
+    Returns
+    -------
+    Priestley-Taylor evaporation in mm/day.
+
+    Raises
+    ------
+    OutOfRangeError
+        If alpha is not positive.
+    InvalidUnitError
+        If unit is invalid.
+
+    Notes
+    -----
+    E_pt = alpha * E_eq
+    where E_eq is the equilibrium evaporation.
+
+    Examples
+    --------
+    >>> print(round(priestley_taylor(15.0, 0.0, 25.0), 3))
+    5.697
+    """
+    if np.any(alpha <= 0):
+        raise OutOfRangeError("Priestley-Taylor coefficient must be positive.")
+    
+    e_eq = equilibrium_evaporation(net_radiation, ground_heat, temp, pressure, unit)
+    pt_evap = alpha * e_eq
+
+    return pt_evap
+
+
+def hargreaves(
+    temp_mean: float,
+    temp_min: float,
+    temp_max: float,
+    extraterrestrial: float,
+    unit: str = "C",
+) -> float:
+    """
+    Hargreaves reference evapotranspiration.
+
+    A temperature-based estimate of reference evapotranspiration, useful when
+    humidity, wind, and radiation measurements are unavailable. Only air
+    temperature and extraterrestrial radiation are required.
+
+    Parameters
+    ----------
+    temp_mean : Mean daily air temperature.
+    temp_min : Minimum daily air temperature.
+    temp_max : Maximum daily air temperature (>= temp_min).
+    extraterrestrial : Extraterrestrial radiation Ra (MJ/m²/day).
+    unit : Unit of the input temperatures: "C", "F", or "K" (default "C").
+
+    Returns
+    -------
+    Reference evapotranspiration in mm/day.
+
+    Raises
+    ------
+    OutOfRangeError
+        If temp_max is less than temp_min.
+    InvalidUnitError
+        If unit is invalid.
+
+    Notes
+    -----
+    Hargreaves-Samani:
+    ET0 = 0.0023 * (T_mean + 17.8) * (T_max - T_min) ** 0.5 * Ra / lambda
+    with temperatures in °C, Ra in MJ/m²/day, and lambda = 2.45 MJ/kg so the
+    0.408 radiation-to-depth factor is applied internally.
+
+    Examples
+    --------
+    >>> print(round(hargreaves(25.0, 18.0, 32.0, 36.0), 3))
+    5.41
+    """
+    t_mean_C = convert_temperature(temp_mean, unit.upper(), "C")
+    t_min_C = convert_temperature(temp_min, unit.upper(), "C")
+    t_max_C = convert_temperature(temp_max, unit.upper(), "C")
+
+    if np.any(t_max_C < t_min_C):
+        raise OutOfRangeError("Maximum temperature must be at least the minimum.")
+    
+    ref_et = (
+        0.0023
+        * (t_mean_C + 17.8)
+        * (t_max_C - t_min_C) ** 0.5
+        * 0.408
+        * extraterrestrial
+    )
+
+    return ref_et
