@@ -29,8 +29,8 @@ dev = ["pytest"]
 
 [project.urls]
 Homepage = "https://tellurislabs.io"
-Source = "https://github.com/TellurisLabs/atmoflux"
-"Bug Tracker" = "https://github.com/TellurisLabs/atmoflux/issues"
+Source = "https://github.com/Telluris-Labs/atmoflux"
+"Bug Tracker" = "https://github.com/Telluris-Labs/atmoflux/issues"
 
 [build-system]
 requires = ["setuptools>=77.0", "wheel"]
