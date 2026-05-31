@@ -3,7 +3,8 @@ atmoflux.core
 =================
 Defines shared data structures and base classes used across atmoflux. 
 Includes common containers and abstractions for surface, atmospheric, 
-or flux state that are not tied to a single physical process.
+or flux state that are not tied to a single physical process. Compatible 
+with both scalar and array-valued inputs.
 
 """
 
@@ -14,6 +15,7 @@ from dataclasses import dataclass
 
 # Outside imports
 import numpy as np
+
 
 @dataclass
 class EnergyBalance:
@@ -118,4 +120,85 @@ class EnergyBalance:
             "ground_heat": self.ground_heat,
             "residual": self.residual,
             "bowen_ratio": self.bowen_ratio,
+        }
+
+
+@dataclass
+class AtmosphericState:
+    """
+    Container bundling the primary atmospheric state variables.
+
+    Groups the near-surface meteorological variables that are commonly passed
+    together through flux calculations, so callers can carry a single object
+    rather than many loose arguments. No unit conversion or derivation is
+    performed; the container simply records the state in the package's standard
+    units. Each field accepts a scalar or a NumPy array.
+
+    Parameters
+    ----------
+    temperature : Air temperature (°C).
+    pressure : Air pressure (kPa).
+    wind_speed : Wind speed (m/s).
+    relative_humidity : Relative humidity (%), optional.
+
+    Attributes
+    ----------
+    temperature : float or numpy.ndarray
+        Air temperature (°C).
+    pressure : float or numpy.ndarray
+        Air pressure (kPa).
+    wind_speed : float or numpy.ndarray
+        Wind speed (m/s).
+    relative_humidity : float, numpy.ndarray, or None
+        Relative humidity (%), or None if not supplied.
+
+    Examples
+    --------
+    >>> state = AtmosphericState(temperature=20.0, pressure=101.325,
+    ...                          wind_speed=3.0, relative_humidity=55.0)
+    >>> state.temperature
+    20.0
+    >>> state
+    AtmosphericState(T=20.0°C, P=101.3kPa, U=3.0m/s, RH=55.0%)
+    """
+
+    temperature: float | np.ndarray
+    pressure: float | np.ndarray
+    wind_speed: float | np.ndarray
+    relative_humidity: float | np.ndarray | None = None
+
+    def __repr__(self) -> str:
+        """Compact representation summarizing arrays by shape and mean."""
+
+        def fmt(value: float | np.ndarray) -> str:
+            arr = np.asarray(value, dtype=float)
+            if arr.ndim == 0:
+                return f"{float(arr):.1f}"
+            return f"<array shape={arr.shape}, mean={np.nanmean(arr):.1f}>"
+
+        rh = "None" if self.relative_humidity is None else f"{fmt(self.relative_humidity)}%"
+        return (
+            f"AtmosphericState(T={fmt(self.temperature)}°C, "
+            f"P={fmt(self.pressure)}kPa, U={fmt(self.wind_speed)}m/s, RH={rh})"
+        )
+
+    def to_dict(self) -> dict:
+        """
+        Convert the atmospheric state to a dictionary.
+
+        Returns
+        -------
+        Dictionary containing all stored state variables.
+
+        Examples
+        --------
+        >>> state = AtmosphericState(20.0, 101.325, 3.0)
+        >>> state.to_dict()["pressure"]
+        101.325
+        """
+        return {
+            "temperature": self.temperature,
+            "pressure": self.pressure,
+            "wind_speed": self.wind_speed,
+            "relative_humidity": self.relative_humidity,
         }
