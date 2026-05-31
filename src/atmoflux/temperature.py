@@ -13,7 +13,7 @@ from __future__ import annotations
 import numpy as np
 
 # imports from within atmoflux
-from .constants import CP_AIR, R_AIR, P0, STEFAN_BOLTZMANN, G, LV, DRY_ADIABATIC_LAPSE_RATE
+from .constants import CP_AIR, R_AIR, P0, STEFAN_BOLTZMANN, G, LV
 from .exceptions import InvalidUnitError, OutOfRangeError, ValidationError
 
 _VALID_UNITS = {"C", "F", "K"}
