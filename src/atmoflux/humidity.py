@@ -45,11 +45,14 @@ def saturation_vp(temp: float, unit: str = "C") -> float:
     2.3382
     """
     unit = unit.upper()
+
     if unit != "C":
         temp_C = convert_temperature(temp, unit, "C")
     else:
         temp_C = temp
+
     svp = SVP_A * np.exp((SVP_B * temp_C) / (temp_C + SVP_C))
+
     return svp
 
 
@@ -79,11 +82,14 @@ def actual_vp(dewpoint: float, unit: str = "C") -> float:
     1.2279
     """
     unit = unit.upper()
+
     if unit != "C":
         Td_C = convert_temperature(dewpoint, unit, "C")
     else:
         Td_C = dewpoint
+
     avp = SVP_A * np.exp((SVP_B * Td_C) / (Td_C + SVP_C))
+
     return avp
 
 
@@ -126,8 +132,11 @@ def saturation_vp_slope(temp: float, unit: str = "C") -> float:
         temp_C = convert_temperature(temp, unit, "C")
     else:
         temp_C = temp
+
     es = saturation_vp(temp_C, "C")
-    return 4098.0 * es / (temp_C + SVP_C) ** 2
+    slope = 4098.0 * es / (temp_C + SVP_C) ** 2
+
+    return slope
 
 
 def relative_humidity(temp: float, dewpoint: float, unit: str = "C") -> float:
@@ -161,7 +170,9 @@ def relative_humidity(temp: float, dewpoint: float, unit: str = "C") -> float:
     """
     es = saturation_vp(temp, unit)
     ea = actual_vp(dewpoint, unit)
-    return 100.0 * ea / es
+    rh = 100.0 * ea / es
+
+    return rh
 
 
 def specific_humidity(vapor_pressure: float, pressure: float) -> float:
@@ -196,7 +207,10 @@ def specific_humidity(vapor_pressure: float, pressure: float) -> float:
     """
     if np.any(pressure <= vapor_pressure):
         raise OutOfRangeError("Total pressure must exceed vapor pressure.")
-    return RMW * vapor_pressure / (pressure - (1 - RMW) * vapor_pressure)
+    
+    q = RMW * vapor_pressure / (pressure - (1 - RMW) * vapor_pressure)
+
+    return q
 
 
 def mixing_ratio(vapor_pressure: float, pressure: float) -> float:
@@ -230,7 +244,10 @@ def mixing_ratio(vapor_pressure: float, pressure: float) -> float:
     """
     if np.any(pressure <= vapor_pressure):
         raise OutOfRangeError("Total pressure must exceed vapor pressure.")
-    return RMW * vapor_pressure / (pressure - vapor_pressure)
+    
+    mixing = RMW * vapor_pressure / (pressure - vapor_pressure)
+
+    return mixing
 
 
 def vapor_pressure_deficit(temp: float, rh: float, unit: str = "C") -> float:
@@ -268,8 +285,11 @@ def vapor_pressure_deficit(temp: float, rh: float, unit: str = "C") -> float:
     """
     if np.any(rh <= 0) or np.any(rh > 100):
         raise OutOfRangeError("Relative humidity must be between 0 and 100%")
+    
     es = saturation_vp(temp, unit)
-    return es * (1 - rh / 100.0)
+    vpd = es * (1 - rh / 100.0)
+
+    return vpd
 
 
 def absolute_humidity(vapor_pressure: float, temp: float, unit: str = "C") -> float:
@@ -305,6 +325,181 @@ def absolute_humidity(vapor_pressure: float, temp: float, unit: str = "C") -> fl
     0.00908
     """
     temp_K = convert_temperature(temp, unit.upper(), "K")
+
     # Convert vapor pressure from kPa to Pa for SI consistency.
     e_pa = vapor_pressure * 1000.0
-    return e_pa / (R_VAPOR * temp_K)
+    absolute = e_pa / (R_VAPOR * temp_K)
+
+    return absolute
+
+
+def saturation_vp_ice(temp: float, unit: str = "C") -> float:
+    """
+    Saturation vapor pressure over ice (kPa) using the Tetens ice formula.
+
+    Parameters
+    ----------
+    temp : Air temperature (typically <= 0 °C).
+    unit : Unit of temperature: "C", "F", or "K" (default is "C").
+
+    Returns
+    -------
+    Saturation vapor pressure over ice in kilopascals (kPa).
+
+    Raises
+    ------
+    InvalidUnitError
+        If unit is invalid.
+
+    Notes
+    -----
+    Tetens formula with ice coefficients:
+    es_ice = 0.61078 * exp(21.875 * T / (T + 265.5))
+    with T in °C.
+
+    Examples
+    --------
+    >>> print(round(saturation_vp_ice(-10), 4))
+    0.2595
+    """
+    temp_C = convert_temperature(temp, unit.upper(), "C")
+    svp_ice = SVP_A * np.exp(21.875 * temp_C / (temp_C + 265.5))
+
+    return svp_ice
+
+
+def specific_humidity_from_dewpoint(
+    dewpoint: float, pressure: float, unit: str = "C"
+) -> float:
+    """
+    Specific humidity (kg/kg) from dew point and total pressure.
+
+    Parameters
+    ----------
+    dewpoint : Dew point temperature.
+    pressure : Total air pressure (kPa), must exceed the vapor pressure.
+    unit : Unit of dewpoint: "C", "F", or "K" (default "C").
+
+    Returns
+    -------
+    Specific humidity in kg of water vapor per kg of moist air.
+
+    Raises
+    ------
+    OutOfRangeError
+        If pressure is not greater than the actual vapor pressure.
+    InvalidUnitError
+        If unit is invalid.
+
+    Notes
+    -----
+    Computes actual vapor pressure from the dew point, then applies
+    q = RMW * e / (P - (1 - RMW) * e).
+
+    Examples
+    --------
+    >>> print(round(specific_humidity_from_dewpoint(10, 101.325), 5))
+    0.00757
+    """
+    e = actual_vp(dewpoint, unit)
+
+    if np.any(pressure <= e):
+        raise OutOfRangeError("Total pressure must exceed vapor pressure.")
+    
+    q = RMW * e / (pressure - (1 - RMW) * e)
+
+    return q
+
+
+def relative_humidity_from_specific_humidity(
+    specific_humidity: float, temp: float, pressure: float, unit: str = "C"
+) -> float:
+    """
+    Relative humidity (%) from specific humidity, temperature, and pressure.
+
+    Parameters
+    ----------
+    specific_humidity : Specific humidity (kg/kg), non-negative.
+    temp : Air temperature.
+    pressure : Total air pressure (kPa), must be positive.
+    unit : Unit of temp: "C", "F", or "K" (default "C").
+
+    Returns
+    -------
+    Relative humidity as a percentage.
+
+    Raises
+    ------
+    OutOfRangeError
+        If specific_humidity is negative or pressure is not positive.
+    InvalidUnitError
+        If unit is invalid.
+
+    Notes
+    -----
+    Inverts the specific-humidity definition to recover vapor pressure,
+    e = q * P / (RMW + (1 - RMW) * q), then divides by saturation vapor pressure.
+
+    Examples
+    --------
+    >>> print(round(relative_humidity_from_specific_humidity(0.00757, 20, 101.325), 1))
+    52.5
+    """
+    if np.any(specific_humidity < 0):
+        raise OutOfRangeError("Specific humidity must be non-negative.")
+    if np.any(pressure <= 0):
+        raise OutOfRangeError("Pressure must be positive.")
+    
+    e = specific_humidity * pressure / (RMW + (1 - RMW) * specific_humidity)
+    es = saturation_vp(temp, unit)
+    rh = 100.0 * e / es
+
+    return rh
+
+
+def precipitable_water(specific_humidity: float, pressure: float) -> float:
+    """
+    Column precipitable water from layer-mean specific humidity.
+
+    Estimates the depth of liquid water that would result if all the water vapor
+    in an atmospheric column were condensed, using a single layer-mean specific
+    humidity and the surface pressure.
+
+    Parameters
+    ----------
+    specific_humidity : Layer-mean specific humidity (kg/kg), non-negative.
+    pressure : Surface pressure (kPa), must be positive.
+
+    Returns
+    -------
+    Precipitable water in millimeters.
+
+    Raises
+    ------
+    OutOfRangeError
+        If specific_humidity is negative or pressure is not positive.
+
+    Notes
+    -----
+    Single-layer approximation:
+    PW = q * P / (rho_water * g)
+    with P converted to pascals and the result expressed in millimeters.
+
+    Examples
+    --------
+    >>> print(round(precipitable_water(0.01, 101.325), 2))
+    103.32
+    """
+    if np.any(specific_humidity < 0):
+        raise OutOfRangeError("Specific humidity must be non-negative.")
+    if np.any(pressure <= 0):
+        raise OutOfRangeError("Pressure must be positive.")
+    
+    g = 9.80665
+    rho_water = 1000.0
+    p_pa = pressure * 1000.0
+
+    # Depth of water in meters, converted to millimeters.
+    depth = specific_humidity * p_pa / (rho_water * g) * 1000.0
+
+    return depth
