@@ -56,8 +56,11 @@ def blackbody_radiation(
     """
     if np.any(emissivity <= 0) or np.any(emissivity > 1):
         raise OutOfRangeError("Emissivity must be in the interval (0, 1].")
+    
     temp_K = convert_temperature(temp, unit.upper(), "K")
-    return emissivity * STEFAN_BOLTZMANN * temp_K**4
+    br = emissivity * STEFAN_BOLTZMANN * temp_K**4
+
+    return br
 
 
 def net_shortwave(sw_down: float, albedo: float) -> float:
@@ -89,7 +92,10 @@ def net_shortwave(sw_down: float, albedo: float) -> float:
     """
     if np.any(albedo < 0) or np.any(albedo > 1):
         raise OutOfRangeError("Albedo must be in the interval [0, 1].")
-    return sw_down * (1 - albedo)
+    
+    net_sw = sw_down * (1 - albedo)
+
+    return net_sw
 
 
 def net_longwave(
@@ -130,9 +136,12 @@ def net_longwave(
     """
     if np.any(emissivity <= 0) or np.any(emissivity > 1):
         raise OutOfRangeError("Emissivity must be in the interval (0, 1].")
+    
     ts_K = convert_temperature(temp_surface, unit.upper(), "K")
     lw_up = emissivity * STEFAN_BOLTZMANN * ts_K**4 + (1 - emissivity) * lw_down
-    return lw_down - lw_up
+    net_lw = lw_down - lw_up
+
+    return net_lw
 
 
 def net_radiation(
@@ -180,7 +189,9 @@ def net_radiation(
     """
     sw_net = net_shortwave(sw_down, albedo)
     lw_net = net_longwave(lw_down, temp_surface, emissivity, unit)
-    return sw_net + lw_net
+    rn = sw_net + lw_net
+
+    return rn
 
 
 def clear_sky_emissivity(temp_air: float, vapor_pressure: float, unit: str = "C") -> float:
@@ -222,6 +233,120 @@ def clear_sky_emissivity(temp_air: float, vapor_pressure: float, unit: str = "C"
     """
     if np.any(vapor_pressure <= 0):
         raise OutOfRangeError("Vapor pressure must be positive.")
+    
     temp_K = convert_temperature(temp_air, unit.upper(), "K")
     e_hpa = vapor_pressure * 10.0  # kPa -> hPa
-    return 1.24 * (e_hpa / temp_K) ** (1.0 / 7.0)
+    cse = 1.24 * (e_hpa / temp_K) ** (1.0 / 7.0)
+
+    return cse
+
+
+def net_longwave_cloud(
+    temp_air: float,
+    vapor_pressure: float,
+    cloud_fraction: float,
+    unit: str = "C",
+) -> float:
+    """
+    Net longwave radiation at the surface with a cloud adjustment (FAO-56 style).
+
+    Estimates net outgoing longwave radiation from air temperature, humidity, and
+    a relative cloudiness term, as used in reference evapotranspiration when
+    surface temperature is unavailable.
+
+    Parameters
+    ----------
+    temp_air : Air temperature.
+    vapor_pressure : Actual vapor pressure (kPa), must be positive.
+    cloud_fraction : Relative shortwave cloudiness term Rs/Rso in [0, 1], where 1
+        is clear sky and 0 is fully overcast.
+    unit : Unit of temp_air: "C", "F", or "K" (default "C").
+
+    Returns
+    -------
+    Net longwave radiation (W/m²); positive indicates a net loss from the
+    surface (outgoing), following the FAO-56 sign convention.
+
+    Raises
+    ------
+    OutOfRangeError
+        If vapor_pressure is not positive or cloud_fraction is outside [0, 1].
+    InvalidUnitError
+        If unit is invalid.
+
+    Notes
+    -----
+    FAO-56 net longwave (converted to W/m² and using the package sign of a
+    positive outgoing loss):
+    Rnl = sigma * T^4 * (0.34 - 0.14*sqrt(e)) * (1.35 * (Rs/Rso) - 0.35)
+    with e in kPa and T in kelvin.
+
+    Examples
+    --------
+    >>> print(round(net_longwave_cloud(20, 1.5, 1.0), 2))
+    70.58
+    """
+    if np.any(vapor_pressure <= 0):
+        raise OutOfRangeError("Vapor pressure must be positive.")
+    if np.any(cloud_fraction < 0) or np.any(cloud_fraction > 1):
+        raise OutOfRangeError("Cloud fraction must be in the interval [0, 1].")
+    
+    temp_K = convert_temperature(temp_air, unit.upper(), "K")
+    emissivity_term = 0.34 - 0.14 * np.sqrt(vapor_pressure)
+    cloud_term = 1.35 * cloud_fraction - 0.35
+    net_lw = STEFAN_BOLTZMANN * temp_K**4 * emissivity_term * cloud_term
+
+    return net_lw
+
+
+def diffuse_fraction(clearness_index: float) -> float:
+    """
+    Diffuse fraction of global shortwave radiation from the clearness index.
+
+    Partitions incoming global shortwave into its diffuse component using the
+    Erbs relation, widely applied in solar resource and canopy radiation models.
+
+    Parameters
+    ----------
+    clearness_index : Clearness index kt = Rs / Ra in [0, 1].
+
+    Returns
+    -------
+    Diffuse fraction (dimensionless) in [0, 1].
+
+    Raises
+    ------
+    OutOfRangeError
+        If clearness_index is outside [0, 1].
+
+    Notes
+    -----
+    Erbs et al. (1982) piecewise relation:
+    kt <= 0.22: kd = 1 - 0.09*kt
+    0.22 < kt <= 0.80: kd = 0.9511 - 0.1604*kt + 4.388*kt^2
+                            - 16.638*kt^3 + 12.336*kt^4
+    kt > 0.80: kd = 0.165
+
+    Examples
+    --------
+    >>> print(round(diffuse_fraction(0.5), 4))
+    0.6591
+    """
+    if np.any(clearness_index < 0) or np.any(clearness_index > 1):
+        raise OutOfRangeError("Clearness index must be in the interval [0, 1].")
+    
+    kt = np.asarray(clearness_index, dtype=float)
+    kd = np.where(
+        kt <= 0.22,
+        1 - 0.09 * kt,
+        np.where(
+            kt <= 0.80,
+            0.9511 - 0.1604 * kt + 4.388 * kt**2 - 16.638 * kt**3 + 12.336 * kt**4,
+            0.165,
+        ),
+    )
+
+    if kd.ndim == 0:
+        return float(kd)
+    
+    return kd
