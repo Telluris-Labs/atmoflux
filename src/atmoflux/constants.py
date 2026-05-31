@@ -96,3 +96,45 @@ MU_AIR = 1.81e-5
 # Mean free path of air molecules at sea level and ~15 °C
 # Units: m
 MFP_AIR = 6.6e-8
+
+'''
+Solar and Astronomical Constants
+Parameters governing solar geometry and extraterrestrial radiation.
+'''
+# Solar declination amplitude
+# Maximum tilt of Earth's axis toward the sun (axial obliquity)
+# Units: degrees
+SOLAR_DECLINATION_MAX = 23.45
+
+# Angstrom-Prescott regression coefficients
+# Default coefficients relating sunshine duration to clear-sky shortwave
+# Units: dimensionless
+ANGSTROM_A = 0.25
+ANGSTROM_B = 0.50
+
+'''
+Evaporation Constants
+Empirical coefficients used in evapotranspiration parameterizations.
+'''
+# Priestley-Taylor coefficient
+# Empirical multiplier on equilibrium evaporation for well-watered surfaces
+# Units: dimensionless
+PRIESTLEY_TAYLOR_ALPHA = 1.26
+
+'''
+Lapse-Rate and Standard-Atmosphere Constants
+Reference values for the dry atmosphere and barometric calculations.
+'''
+# Dry adiabatic lapse rate
+# Rate of temperature decrease for an unsaturated parcel rising adiabatically
+# Equivalent to G / CP_AIR; provided explicitly for convenience
+# Units: K/m
+DRY_ADIABATIC_LAPSE_RATE = G / CP_AIR
+
+# Reference temperature for the standard atmosphere at sea level
+# Units: K
+T0_STANDARD = 288.15
+
+# Mean tropospheric (environmental) lapse rate of the US Standard Atmosphere
+# Units: K/m
+LAPSE_RATE_STANDARD = 0.0065
