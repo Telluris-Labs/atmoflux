@@ -1,0 +1,28 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+
+title: atmoflux
+
+authors:
+  - family-names: Erlick
+    given-names: Justin
+    orcid: https://orcid.org/0009-0006-5545-0158
+    affiliation: Telluris Labs
+
+version: 1.0.0
+date-released: 2026-05-30
+
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.20470204
+
+preferred-citation:
+  type: software
+  authors:
+    - family-names: Erlick
+      given-names: Justin
+      orcid: https://orcid.org/0009-0006-5545-0158
+  title: atmoflux
+  version: 1.0.0
+  year: 2026
+  doi: 10.5281/zenodo.20470204
