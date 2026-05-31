@@ -9,6 +9,16 @@ The **atmoflux** library emphasizes physically explicit formulations and transpa
 
 **atmoflux** is being developed alongside dissertation research focused on urban microclimates, heat stress, and land–atmosphere interactions, and is intended to evolve as a flexible research framework rather than a fixed operational model.
 
+## Citation
+
+If you use **atmoflux** in academic work, please cite the software using the DOI provided below.
+
+Each release is archived via Zenodo and assigned a permanent DOI to ensure reproducibility.
+
+The recommended citation format is available in CITATION.cff and via the “Cite this repository” button on GitHub.
+
+DOI: https://doi.org/10.5281/zenodo.20470203 
+
 ## Requirements
 
 - Python ≥ 3.9 
