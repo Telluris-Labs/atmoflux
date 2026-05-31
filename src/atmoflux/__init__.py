@@ -19,10 +19,13 @@ from . import temperature
 from . import humidity
 from . import wind
 from . import constants
+from . import atmosphere
 
 # Flux / process modules
 from . import radiative
+from . import solar
 from . import turbulent
+from . import stability
 from . import hydro
 from . import aerosols
 from . import balance
@@ -36,8 +39,11 @@ __all__ = [
     "humidity",
     "wind",
     "constants",
+    "atmosphere",
     "radiative",
+    "solar",
     "turbulent",
+    "stability",
     "hydro",
     "aerosols",
     "balance",
