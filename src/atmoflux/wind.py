@@ -64,7 +64,9 @@ def convert_wind_speed(speed: float, from_unit: str, to_unit: str) -> float:
         raise InvalidUnitError(f"to_unit must be one of {set(_WIND_TO_MS)}")
 
     speed_ms = speed * _WIND_TO_MS[from_unit]
-    return speed_ms / _WIND_TO_MS[to_unit]
+    ws = speed_ms / _WIND_TO_MS[to_unit]
+
+    return ws
 
 
 def wind_speed(u: float, v: float) -> float:
@@ -85,7 +87,9 @@ def wind_speed(u: float, v: float) -> float:
     >>> print(wind_speed(3.0, 4.0))
     5.0
     """
-    return np.hypot(u, v)
+    ws = np.hypot(u, v)
+
+    return ws
 
 
 def wind_direction(u: float, v: float) -> float:
@@ -116,7 +120,9 @@ def wind_direction(u: float, v: float) -> float:
     >>> print(wind_direction(-1.0, 0.0))
     90.0
     """
-    return (270.0 - np.degrees(np.arctan2(v, u))) % 360.0
+    wd = (270.0 - np.degrees(np.arctan2(v, u))) % 360.0
+
+    return wd
 
 
 def log_wind_profile(
@@ -166,11 +172,13 @@ def log_wind_profile(
         (height_ref - displacement) <= roughness
     ):
         raise OutOfRangeError("Heights must exceed displacement plus roughness length.")
-
-    return speed_ref * (
+    
+    lwp = speed_ref * (
         np.log((height - displacement) / roughness)
         / np.log((height_ref - displacement) / roughness)
     )
+
+    return lwp
 
 
 def power_law_profile(
@@ -207,7 +215,10 @@ def power_law_profile(
     """
     if np.any(height <= 0) or np.any(height_ref <= 0):
         raise OutOfRangeError("Heights must be positive.")
-    return speed_ref * (height / height_ref) ** exponent
+    
+    plp = speed_ref * (height / height_ref) ** exponent
+
+    return plp
 
 
 def friction_velocity(
@@ -251,8 +262,10 @@ def friction_velocity(
         raise OutOfRangeError("Roughness length must be positive.")
     if np.any((height - displacement) <= roughness):
         raise OutOfRangeError("Height must exceed displacement plus roughness length.")
+    
+    fv = karman * speed / np.log((height - displacement) / roughness)
 
-    return karman * speed / np.log((height - displacement) / roughness)
+    return fv
 
 
 def wind_shear(
@@ -288,4 +301,162 @@ def wind_shear(
     """
     if np.any(height_upper == height_lower):
         raise OutOfRangeError("Upper and lower heights must differ.")
-    return (speed_upper - speed_lower) / (height_upper - height_lower)
+    
+    shear = (speed_upper - speed_lower) / (height_upper - height_lower)
+
+    return shear
+
+
+def wind_components(speed: float, direction: float) -> tuple:
+    """
+    Zonal and meridional wind components from speed and meteorological direction.
+
+    Inverse of :func:`wind_direction`: given the speed and the compass direction
+    the wind blows *from*, returns the u (eastward) and v (northward) components.
+
+    Parameters
+    ----------
+    speed : Wind speed magnitude (any unit), non-negative.
+    direction : Meteorological wind direction in degrees (the direction the wind
+        comes from), 0 = north, 90 = east.
+
+    Returns
+    -------
+    Tuple of (u, v) components in the same unit as speed.
+
+    Raises
+    ------
+    OutOfRangeError
+        If speed is negative.
+
+    Notes
+    -----
+    u = -speed * sin(direction)
+    v = -speed * cos(direction)
+    with direction in degrees. The negative signs convert the "from" convention
+    into vector components pointing in the direction of motion.
+
+    Examples
+    --------
+    >>> u, v = wind_components(10.0, 270.0)
+    >>> print(round(float(u), 2), round(float(v), 2))
+    10.0 0.0
+    """
+    if np.any(speed < 0):
+        raise OutOfRangeError("Wind speed must be non-negative.")
+    
+    rad = np.radians(direction)
+    u = -speed * np.sin(rad)
+    v = -speed * np.cos(rad)
+
+    return u, v
+
+
+def wind_power_density(speed: float, density: float = 1.225) -> float:
+    """
+    Wind power density of the airflow.
+
+    The kinetic power per unit area carried by the wind, a key resource metric
+    in wind-energy assessment.
+
+    Parameters
+    ----------
+    speed : Wind speed (m/s), non-negative.
+    density : Air density (kg/m³), default 1.225 (standard sea level).
+
+    Returns
+    -------
+    Wind power density in W/m².
+
+    Raises
+    ------
+    OutOfRangeError
+        If speed is negative or density is not positive.
+
+    Notes
+    -----
+    P = 0.5 * rho * U ** 3
+
+    Examples
+    --------
+    >>> print(round(wind_power_density(8.0), 2))
+    313.6
+    """
+    if np.any(speed < 0):
+        raise OutOfRangeError("Wind speed must be non-negative.")
+    if np.any(density <= 0):
+        raise OutOfRangeError("Density must be positive.")
+    
+    wpd = 0.5 * density * speed**3
+
+    return wpd
+
+
+def roughness_from_canopy(canopy_height: float) -> float:
+    """
+    Estimate aerodynamic roughness length from vegetation canopy height.
+
+    Parameters
+    ----------
+    canopy_height : Vegetation canopy height (m), must be positive.
+
+    Returns
+    -------
+    Aerodynamic roughness length z0 (m).
+
+    Raises
+    ------
+    OutOfRangeError
+        If canopy_height is not positive.
+
+    Notes
+    -----
+    Common rule of thumb:
+    z0 = 0.1 * h
+
+    Examples
+    --------
+    >>> print(round(roughness_from_canopy(2.0), 3))
+    0.2
+    """
+    if np.any(canopy_height <= 0):
+        raise OutOfRangeError("Canopy height must be positive.")
+    
+    roughness = 0.1 * canopy_height
+
+    return roughness
+
+
+def displacement_from_canopy(canopy_height: float) -> float:
+    """
+    Estimate zero-plane displacement height from vegetation canopy height.
+
+    Parameters
+    ----------
+    canopy_height : Vegetation canopy height (m), must be positive.
+
+    Returns
+    -------
+    Zero-plane displacement height d (m).
+
+    Raises
+    ------
+    OutOfRangeError
+        If canopy_height is not positive.
+
+    Notes
+    -----
+    Common rule of thumb:
+    d = 0.67 * h
+
+    Examples
+    --------
+    >>> print(round(displacement_from_canopy(2.0), 3))
+    1.34
+    """
+    if np.any(canopy_height <= 0):
+        raise OutOfRangeError("Canopy height must be positive.")
+    
+    displacement = 0.67 * canopy_height
+
+    return displacement
