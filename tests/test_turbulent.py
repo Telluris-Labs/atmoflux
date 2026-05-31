@@ -47,3 +47,33 @@ def test_bulk_transfer_coefficient_bad_roughness():
 def test_air_density_array():
     out = Tu.air_density(np.array([15.0, 15.0]), 101.325)
     assert np.allclose(out, 1.225, atol=1e-3)
+
+
+def test_surface_shear_stress_value():
+    assert Tu.surface_shear_stress(1.225, 0.3) == pytest.approx(0.11025, abs=1e-5)
+
+
+def test_surface_shear_stress_bad_density():
+    with pytest.raises(OutOfRangeError):
+        Tu.surface_shear_stress(0.0, 0.3)
+
+
+def test_aerodynamic_resistance_value():
+    assert Tu.aerodynamic_resistance(3.0, 10.0, 0.03) == pytest.approx(70.3, abs=0.05)
+
+
+def test_aerodynamic_resistance_decreases_with_wind():
+    # Stronger wind reduces aerodynamic resistance.
+    assert Tu.aerodynamic_resistance(5.0, 10.0, 0.03) < Tu.aerodynamic_resistance(
+        3.0, 10.0, 0.03
+    )
+
+
+def test_aerodynamic_resistance_bad_wind():
+    with pytest.raises(OutOfRangeError):
+        Tu.aerodynamic_resistance(0.0, 10.0, 0.03)
+
+
+def test_aerodynamic_resistance_bad_height():
+    with pytest.raises(OutOfRangeError):
+        Tu.aerodynamic_resistance(3.0, 0.01, 0.03)

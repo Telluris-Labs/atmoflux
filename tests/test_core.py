@@ -2,7 +2,7 @@
 import numpy as np
 import pytest
 
-from atmoflux.core import EnergyBalance
+from atmoflux.core import EnergyBalance, AtmosphericState
 
 
 def test_residual_closed_budget():
@@ -50,3 +50,29 @@ def test_bowen_ratio_zero_latent_is_inf():
 def test_repr_runs_for_arrays():
     eb = EnergyBalance(np.array([400.0, 500.0]), 150.0, 200.0)
     assert "array" in repr(eb)
+
+
+def test_atmospheric_state_fields():
+    state = AtmosphericState(20.0, 101.325, 3.0, 55.0)
+    assert state.temperature == 20.0
+    assert state.pressure == 101.325
+    assert state.wind_speed == 3.0
+    assert state.relative_humidity == 55.0
+
+
+def test_atmospheric_state_optional_rh():
+    state = AtmosphericState(20.0, 101.325, 3.0)
+    assert state.relative_humidity is None
+    assert "RH=None" in repr(state)
+
+
+def test_atmospheric_state_to_dict():
+    state = AtmosphericState(20.0, 101.325, 3.0, 55.0)
+    d = state.to_dict()
+    assert set(d) == {"temperature", "pressure", "wind_speed", "relative_humidity"}
+    assert d["pressure"] == 101.325
+
+
+def test_atmospheric_state_array_repr():
+    state = AtmosphericState(np.array([18.0, 22.0]), 101.325, 3.0)
+    assert "array" in repr(state)

@@ -89,3 +89,51 @@ def test_wind_shear_equal_heights():
 def test_log_wind_profile_array():
     out = W.log_wind_profile(5.0, 10.0, np.array([2.0, 10.0]), 0.03)
     assert np.allclose(out, [3.615, 5.0], atol=1e-3)
+
+
+def test_wind_components_westerly():
+    # A 270 deg (from west) wind has a positive eastward u and near-zero v.
+    u, v = W.wind_components(10.0, 270.0)
+    assert u == pytest.approx(10.0, abs=1e-6)
+    assert v == pytest.approx(0.0, abs=1e-6)
+
+
+def test_wind_components_roundtrip():
+    # Components -> speed/direction should recover the inputs.
+    u, v = W.wind_components(7.5, 215.0)
+    assert W.wind_speed(u, v) == pytest.approx(7.5)
+    assert W.wind_direction(u, v) == pytest.approx(215.0, abs=1e-4)
+
+
+def test_wind_components_negative_speed():
+    with pytest.raises(OutOfRangeError):
+        W.wind_components(-1.0, 90.0)
+
+
+def test_wind_power_density_value():
+    assert W.wind_power_density(8.0) == pytest.approx(313.6, abs=1e-2)
+
+
+def test_wind_power_density_cubic_scaling():
+    # Doubling wind speed increases power density eightfold.
+    assert W.wind_power_density(10.0) == pytest.approx(8 * W.wind_power_density(5.0))
+
+
+def test_wind_power_density_bad_density():
+    with pytest.raises(OutOfRangeError):
+        W.wind_power_density(8.0, density=0.0)
+
+
+def test_roughness_from_canopy_value():
+    assert W.roughness_from_canopy(2.0) == pytest.approx(0.2)
+
+
+def test_displacement_from_canopy_value():
+    assert W.displacement_from_canopy(2.0) == pytest.approx(1.34)
+
+
+def test_canopy_helpers_bad_height():
+    with pytest.raises(OutOfRangeError):
+        W.roughness_from_canopy(0.0)
+    with pytest.raises(OutOfRangeError):
+        W.displacement_from_canopy(-1.0)

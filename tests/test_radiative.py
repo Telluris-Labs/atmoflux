@@ -56,3 +56,42 @@ def test_clear_sky_emissivity_bad_vapor_pressure():
 def test_net_shortwave_array():
     out = R.net_shortwave(np.array([800.0, 400.0]), 0.25)
     assert np.allclose(out, [600.0, 300.0])
+
+
+def test_net_longwave_cloud_value():
+    assert R.net_longwave_cloud(20, 1.5, 1.0) == pytest.approx(70.58, abs=1e-2)
+
+
+def test_net_longwave_cloud_clear_exceeds_overcast():
+    clear = R.net_longwave_cloud(20, 1.5, 1.0)
+    overcast = R.net_longwave_cloud(20, 1.5, 0.3)
+    assert clear > overcast
+
+
+def test_net_longwave_cloud_bad_fraction():
+    with pytest.raises(OutOfRangeError):
+        R.net_longwave_cloud(20, 1.5, 1.5)
+
+
+def test_net_longwave_cloud_bad_vapor_pressure():
+    with pytest.raises(OutOfRangeError):
+        R.net_longwave_cloud(20, 0.0, 1.0)
+
+
+def test_diffuse_fraction_value():
+    assert R.diffuse_fraction(0.5) == pytest.approx(0.6591, abs=1e-4)
+
+
+def test_diffuse_fraction_clear_sky_low():
+    # Very clear skies (high kt) give a small, capped diffuse fraction.
+    assert R.diffuse_fraction(0.9) == pytest.approx(0.165)
+
+
+def test_diffuse_fraction_overcast_high():
+    # Very cloudy skies (low kt) give a near-unity diffuse fraction.
+    assert R.diffuse_fraction(0.1) == pytest.approx(1 - 0.09 * 0.1)
+
+
+def test_diffuse_fraction_bad_input():
+    with pytest.raises(OutOfRangeError):
+        R.diffuse_fraction(1.5)

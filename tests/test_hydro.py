@@ -53,3 +53,34 @@ def test_open_water_exceeds_reference_et():
     pe = Hy.penman_evaporation(15.0, 0.0, 25.0, 2.0, 3.169, 1.9, 101.3)
     et0 = Hy.potential_evapotranspiration(15.0, 0.0, 25.0, 2.0, 3.169, 1.9, 101.3)
     assert pe > et0
+
+
+def test_equilibrium_evaporation_value():
+    assert Hy.equilibrium_evaporation(15.0, 0.0, 25.0) == pytest.approx(
+        4.521, abs=1e-3
+    )
+
+
+def test_priestley_taylor_value():
+    assert Hy.priestley_taylor(15.0, 0.0, 25.0) == pytest.approx(5.697, abs=1e-3)
+
+
+def test_priestley_taylor_exceeds_equilibrium():
+    # The Priestley-Taylor alpha (~1.26) scales equilibrium evaporation up.
+    pt = Hy.priestley_taylor(15.0, 0.0, 25.0)
+    eq = Hy.equilibrium_evaporation(15.0, 0.0, 25.0)
+    assert pt > eq
+
+
+def test_priestley_taylor_bad_alpha():
+    with pytest.raises(OutOfRangeError):
+        Hy.priestley_taylor(15.0, 0.0, 25.0, alpha=0.0)
+
+
+def test_hargreaves_value():
+    assert Hy.hargreaves(25.0, 18.0, 32.0, 36.0) == pytest.approx(5.41, abs=1e-2)
+
+
+def test_hargreaves_bad_temperature_range():
+    with pytest.raises(OutOfRangeError):
+        Hy.hargreaves(25.0, 32.0, 18.0, 36.0)
