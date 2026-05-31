@@ -16,6 +16,7 @@ import numpy as np
 from .core import EnergyBalance
 from .exceptions import OutOfRangeError
 
+
 def surface_energy_residual(
         net_radiation: float, 
         sensible_heat: float, 
@@ -76,8 +77,10 @@ def bowen_ratio(sensible_heat: float, latent_heat: float) -> float:
     """
     with np.errstate(divide="ignore", invalid="ignore"):
         ratio = np.divide(sensible_heat, latent_heat)
+
     if np.ndim(ratio) == 0:
         return float(ratio)
+    
     return ratio
 
 
@@ -116,3 +119,114 @@ def energy_balance(
         latent_heat=latent_heat,
         ground_heat=ground_heat,
     )
+
+
+def available_energy(net_radiation: float, ground_heat: float = 0.0) -> float:
+    """
+    Available energy at the surface.
+
+    The energy available to drive the turbulent (sensible and latent) heat
+    fluxes after accounting for ground heat storage.
+
+    Parameters
+    ----------
+    net_radiation : Net all-wave radiation Rn (W/m²).
+    ground_heat : Ground heat flux G (W/m²), default 0.0.
+
+    Returns
+    -------
+    Available energy Rn - G (W/m²).
+
+    Notes
+    -----
+    A = Rn - G
+
+    Examples
+    --------
+    >>> available_energy(400.0, 50.0)
+    350.0
+    """
+    return net_radiation - ground_heat
+
+
+def energy_balance_ratio(
+    sensible_heat: float,
+    latent_heat: float,
+    net_radiation: float,
+    ground_heat: float = 0.0,
+) -> float:
+    """
+    Energy balance closure ratio.
+
+    The ratio of the turbulent heat fluxes to the available energy, a common
+    diagnostic of energy-balance closure in eddy-covariance measurements. A value
+    of 1 indicates perfect closure.
+
+    Parameters
+    ----------
+    sensible_heat : Sensible heat flux H (W/m²).
+    latent_heat : Latent heat flux LE (W/m²).
+    net_radiation : Net all-wave radiation Rn (W/m²).
+    ground_heat : Ground heat flux G (W/m²), default 0.0.
+
+    Returns
+    -------
+    Energy balance ratio (H + LE) / (Rn - G); ``inf`` or ``nan`` where the
+    available energy is 0.
+
+    Notes
+    -----
+    EBR = (H + LE) / (Rn - G)
+
+    Examples
+    --------
+    >>> round(energy_balance_ratio(150.0, 200.0, 400.0, 50.0), 3)
+    1.0
+    """
+    available = net_radiation - ground_heat
+
+    with np.errstate(divide="ignore", invalid="ignore"):
+        ratio = np.divide(sensible_heat + latent_heat, available)
+
+    if np.ndim(ratio) == 0:
+        return float(ratio)
+    
+    return ratio
+
+
+def ground_heat_fraction(net_radiation: float, fraction: float = 0.1) -> float:
+    """
+    Estimate ground heat flux as a fraction of net radiation.
+
+    A simple parameterization of ground heat flux when direct measurements are
+    unavailable, expressing G as a fixed fraction of net radiation.
+
+    Parameters
+    ----------
+    net_radiation : Net all-wave radiation Rn (W/m²).
+    fraction : Fraction of net radiation partitioned to the ground (default 0.1).
+
+    Returns
+    -------
+    Estimated ground heat flux G (W/m²).
+
+    Raises
+    ------
+    OutOfRangeError
+        If fraction is outside [0, 1].
+
+    Notes
+    -----
+    G = fraction * Rn
+    Typical daytime values of the fraction range from about 0.05 to 0.2 for
+    vegetated surfaces.
+
+    Examples
+    --------
+    >>> ground_heat_fraction(400.0)
+    40.0
+    """
+    if np.any(fraction < 0) or np.any(fraction > 1):
+        raise OutOfRangeError("Fraction must be in the interval [0, 1].")
+    
+    return fraction * net_radiation
