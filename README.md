@@ -21,8 +21,8 @@ DOI: https://doi.org/10.5281/zenodo.20470203
 
 ## Requirements
 
-- Python ≥ 3.9 
-- [NumPy](https://numpy.org/) ≥ 1.22 — the only runtime dependency
+- Python ≥ 3.9 (developed and tested in 3.12)
+- [NumPy](https://numpy.org/) ≥ 1.26 — the only runtime dependency
 
 Keeping the dependency footprint minimal is a deliberate design goal; NumPy is the sole external requirement.
 
@@ -77,26 +77,29 @@ print(eb.bowen_ratio)    # H / LE
 
 | Module | Description |
 | --- | --- |
-| `temperature` | Unit conversion, dew point, potential and virtual temperature, lapse rate, surface temperature from longwave |
-| `humidity` | Saturation and actual vapor pressure, relative and specific humidity, mixing ratio, vapor pressure deficit, absolute humidity |
-| `wind` | Speed unit conversion, vector components, log and power-law profiles, friction velocity, shear |
+| `temperature` | Unit conversion, dew point, potential, virtual, wet-bulb and equivalent potential temperature, lapse rates, surface temperature from longwave |
+| `humidity` | Saturation and actual vapor pressure (water and ice), relative and specific humidity, mixing ratio, vapor pressure deficit, absolute humidity, precipitable water |
+| `wind` | Speed unit conversion, vector components, log and power-law profiles, friction velocity, shear, wind power density, canopy-derived roughness and displacement |
+| `atmosphere` | Scale height, barometric pressure with altitude, hypsometric thickness, density altitude, US Standard Atmosphere profile |
 
 **Flux / process**
 
 | Module | Description |
 | --- | --- |
-| `radiative` | Blackbody emission, net shortwave and longwave, net radiation, clear-sky emissivity |
-| `turbulent` | Air density, bulk-aerodynamic sensible and latent heat fluxes, transfer coefficients |
-| `hydro` | Latent-heat-to-evaporation conversion, Penman, Penman-Monteith, FAO-56 reference ET |
+| `radiative` | Blackbody emission, net shortwave and longwave (clear-sky and cloud-adjusted), net radiation, clear-sky emissivity, diffuse fraction |
+| `solar` | Solar declination, hour angle, zenith and elevation, daylight hours, extraterrestrial and clear-sky shortwave radiation |
+| `turbulent` | Air density, bulk-aerodynamic sensible and latent heat fluxes, transfer coefficients, surface shear stress, aerodynamic resistance |
+| `stability` | Bulk Richardson number, Obukhov length, stability parameter and correction functions, stability classification |
+| `hydro` | Latent-heat-to-evaporation conversion, Penman, Penman-Monteith, FAO-56 reference ET, Priestley-Taylor, Hargreaves, equilibrium evaporation |
 | `aerosols` | Gravitational settling, dry deposition, surface emission flux |
-| `balance` | Energy budget residual, Bowen ratio, `EnergyBalance` assembly |
+| `balance` | Energy budget residual, Bowen ratio, available energy, energy balance ratio, ground heat fraction, `EnergyBalance` assembly |
 
 **Support**
 
 | Module | Description |
 | --- | --- |
 | `constants` | Physical and derived constants with documented units |
-| `core` | Shared data structures, including the `EnergyBalance` container |
+| `core` | Shared data structures, including the `EnergyBalance` and `AtmosphericState` containers |
 | `exceptions` | Package exception hierarchy rooted at `AtmofluxError` |
 
 ## Testing
