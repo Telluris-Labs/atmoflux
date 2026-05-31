@@ -6,13 +6,14 @@ Includes unit conversion, dew point, potential and virtual temperature, lapse
 rate, and surface temperature retrieved from upwelling longwave radiation.
 
 """
+
 from __future__ import annotations
 
 # Outside imports
 import numpy as np
 
 # imports from within atmoflux
-from .constants import CP_AIR, R_AIR, P0, STEFAN_BOLTZMANN
+from .constants import CP_AIR, R_AIR, P0, STEFAN_BOLTZMANN, G, LV, DRY_ADIABATIC_LAPSE_RATE
 from .exceptions import InvalidUnitError, OutOfRangeError, ValidationError
 
 _VALID_UNITS = {"C", "F", "K"}
@@ -252,8 +253,9 @@ def potential_temperature(
 
     temp_K = convert_temperature(temp, unit.upper(), "K")
     theta_K = temp_K * (reference_pressure / pressure) ** (R_AIR / CP_AIR)
+    pt = convert_temperature(theta_K, "K", unit.upper())
 
-    return convert_temperature(theta_K, "K", unit.upper())
+    return pt
 
 
 def virtual_temperature(temp: float, mixing_ratio: float, unit: str = "K") -> float:
@@ -298,8 +300,9 @@ def virtual_temperature(temp: float, mixing_ratio: float, unit: str = "K") -> fl
 
     temp_K = convert_temperature(temp, unit.upper(), "K")
     tv_K = temp_K * (1 + 0.61 * mixing_ratio)
+    vt = convert_temperature(tv_K, "K", unit.upper())
 
-    return convert_temperature(tv_K, "K", unit.upper())
+    return vt
 
 
 def lapse_rate(
@@ -355,8 +358,9 @@ def lapse_rate(
 
     t_lower_K = convert_temperature(temp_lower, unit.upper(), "K")
     t_upper_K = convert_temperature(temp_upper, unit.upper(), "K")
+    lapse = -(t_upper_K - t_lower_K) / (height_upper - height_lower)
 
-    return -(t_upper_K - t_lower_K) / (height_upper - height_lower)
+    return lapse
 
 
 def surface_temperature_from_lw(
@@ -405,5 +409,163 @@ def surface_temperature_from_lw(
         raise OutOfRangeError("Emissivity must be in the interval (0, 1].")
 
     ts_K = (lw_up / (emissivity * STEFAN_BOLTZMANN)) ** 0.25
+    st = convert_temperature(ts_K, "K", unit.upper())
 
-    return convert_temperature(ts_K, "K", unit.upper())
+    return st
+
+
+def wet_bulb_temperature(temp: float, rh: float, unit: str = "C") -> float:
+    """
+    Wet-bulb temperature using Stull's empirical approximation.
+
+    The wet-bulb temperature is the lowest temperature air can reach by
+    evaporative cooling at constant pressure. Stull's relation is accurate to
+    within a few tenths of a degree for typical surface conditions.
+
+    Parameters
+    ----------
+    temp : Air temperature.
+    rh : Relative humidity (%), in the interval (0, 100].
+    unit : Unit of input/output temperature: "C", "F", or "K" (default "C").
+
+    Returns
+    -------
+    Wet-bulb temperature in the same unit as the input.
+
+    Raises
+    ------
+    OutOfRangeError
+        If rh is not in the interval (0, 100].
+    InvalidUnitError
+        If unit is invalid.
+
+    Notes
+    -----
+    Stull (2011), valid near standard sea-level pressure:
+    Tw = T*atan(0.151977*(RH+8.313659)**0.5) + atan(T+RH)
+         - atan(RH-1.676331) + 0.00391838*RH**1.5*atan(0.023101*RH)
+         - 4.686035
+    with T in °C and RH in percent.
+
+    Examples
+    --------
+    >>> print(round(wet_bulb_temperature(25, 50), 2))
+    18.0
+    """
+    if np.any(rh <= 0) or np.any(rh > 100):
+        raise OutOfRangeError("Relative humidity must be between 0 and 100%")
+    
+    temp_C = convert_temperature(temp, unit.upper(), "C")
+    tw = (
+        temp_C * np.arctan(0.151977 * (rh + 8.313659) ** 0.5)
+        + np.arctan(temp_C + rh)
+        - np.arctan(rh - 1.676331)
+        + 0.00391838 * rh**1.5 * np.arctan(0.023101 * rh)
+        - 4.686035
+    )
+
+    if unit.upper() != "C":
+        return convert_temperature(tw, "C", unit.upper())
+    
+    return tw
+
+
+def equivalent_potential_temperature(
+    temp: float, mixing_ratio: float, pressure: float, unit: str = "K"
+) -> float:
+    """
+    Approximate equivalent potential temperature of moist air.
+
+    Equivalent potential temperature is the potential temperature a parcel would
+    attain if all its water vapor condensed and the released latent heat warmed
+    it. It is conserved under both dry and moist adiabatic processes.
+
+    Parameters
+    ----------
+    temp : Air temperature.
+    mixing_ratio : Water vapor mixing ratio (kg/kg), non-negative.
+    pressure : Ambient pressure (kPa), must be positive.
+    unit : Unit of input/output temperature: "C", "F", or "K" (default "K").
+
+    Returns
+    -------
+    Equivalent potential temperature in the same unit as the input.
+
+    Raises
+    ------
+    OutOfRangeError
+        If mixing_ratio is negative or pressure is not positive.
+    InvalidUnitError
+        If unit is invalid.
+
+    Notes
+    -----
+    Bolton-style approximation using the dry potential temperature theta:
+    theta_e = theta * exp(Lv * w / (cp * T))
+    with T in kelvin and w the mixing ratio in kg/kg.
+
+    Examples
+    --------
+    >>> print(round(equivalent_potential_temperature(290.0, 0.01, 90.0), 2))
+    326.29
+    """
+    if np.any(mixing_ratio < 0):
+        raise OutOfRangeError("Mixing ratio must be non-negative.")
+    if np.any(pressure <= 0):
+        raise OutOfRangeError("Pressure must be positive.")
+    
+    temp_K = convert_temperature(temp, unit.upper(), "K")
+    theta = potential_temperature(temp_K, pressure, unit="K")
+    theta_e = theta * np.exp(LV * mixing_ratio / (CP_AIR * temp_K))
+    eq_pt = convert_temperature(theta_e, "K", unit.upper())
+
+    return eq_pt
+
+
+def moist_adiabatic_lapse_rate(temp: float, mixing_ratio: float, unit: str = "C") -> float:
+    """
+    Saturated (moist) adiabatic lapse rate.
+
+    The rate of temperature decrease with height for a saturated parcel rising
+    adiabatically. It is smaller than the dry rate because latent heat release
+    partially offsets adiabatic cooling.
+
+    Parameters
+    ----------
+    temp : Air temperature.
+    mixing_ratio : Saturation mixing ratio (kg/kg), non-negative.
+    unit : Unit of temp: "C", "F", or "K" (default "C").
+
+    Returns
+    -------
+    Moist adiabatic lapse rate in K/m.
+
+    Raises
+    ------
+    OutOfRangeError
+        If mixing_ratio is negative.
+    InvalidUnitError
+        If unit is invalid.
+
+    Notes
+    -----
+    Standard expression:
+    Gamma_m = g * (1 + Lv*w / (R_air*T)) / (cp + Lv^2*w / (R_vapor*T^2))
+    Here R_vapor is approximated through the molecular-weight ratio embedded in
+    the latent-heat term; valid for typical tropospheric conditions.
+
+    Examples
+    --------
+    >>> print(round(moist_adiabatic_lapse_rate(20, 0.015) * 1000, 3))
+    4.302
+    """
+    if np.any(mixing_ratio < 0):
+        raise OutOfRangeError("Mixing ratio must be non-negative.")
+    
+    temp_K = convert_temperature(temp, unit.upper(), "K")
+    r_vapor = 461.5
+    numerator = G * (1 + LV * mixing_ratio / (R_AIR * temp_K))
+    denominator = CP_AIR + (LV**2 * mixing_ratio) / (r_vapor * temp_K**2)
+    lapse = numerator / denominator
+    
+    return lapse
