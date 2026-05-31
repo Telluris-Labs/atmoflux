@@ -10,8 +10,8 @@ dependencies = [
 authors = [
     { name = "Telluris Labs", email = "info@tellurislabs.io" }
 ]
-urls = { "Homepage" = "https://tellurislabs.io" }
-license = { text = "MIT" }
+license = "MIT"
+license-files = ["LICENSE"]
 keywords = ["atmospheric science","climate science","micrometeorology","surface energy balance","land-atmosphere exchange",
     "energy fluxes", "radiative fluxes","turbulent fluxes","hydrological fluxes","boundary layer","urban climate"
 ]
@@ -24,8 +24,16 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Hydrology"   
 ]
 
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[project.urls]
+Homepage = "https://tellurislabs.io"
+Source = "https://github.com/TellurisLabs/atmoflux"
+"Bug Tracker" = "https://github.com/TellurisLabs/atmoflux/issues"
+
 [build-system]
-requires = ["setuptools>=68.0", "wheel"]
+requires = ["setuptools>=77.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
