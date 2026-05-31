@@ -52,9 +52,12 @@ def air_density(temp: float, pressure: float, unit: str = "C") -> float:
     """
     if np.any(pressure <= 0):
         raise OutOfRangeError("Pressure must be positive.")
+    
     temp_K = convert_temperature(temp, unit.upper(), "K")
     p_pa = pressure * 1000.0  # kPa -> Pa
-    return p_pa / (R_AIR * temp_K)
+    density = p_pa / (R_AIR * temp_K)
+
+    return density
 
 
 def sensible_heat_flux(
@@ -100,7 +103,9 @@ def sensible_heat_flux(
     """
     ts_K = convert_temperature(temp_surface, unit.upper(), "K")
     ta_K = convert_temperature(temp_air, unit.upper(), "K")
-    return density * CP_AIR * transfer_coeff * wind_speed * (ts_K - ta_K)
+    sshf = density * CP_AIR * transfer_coeff * wind_speed * (ts_K - ta_K)
+
+    return sshf
 
 
 def latent_heat_flux(
@@ -135,7 +140,9 @@ def latent_heat_flux(
     >>> print(round(latent_heat_flux(1.2, 3.0, 0.008, 0.012, 0.0013), 4))
     45.864
     """
-    return density * LV * transfer_coeff * wind_speed * (q_surface - q_air)
+    slhf = density * LV * transfer_coeff * wind_speed * (q_surface - q_air)
+
+    return slhf
 
 
 def bulk_transfer_coefficient(
@@ -174,4 +181,98 @@ def bulk_transfer_coefficient(
         raise OutOfRangeError("Roughness length must be positive.")
     if np.any((height - displacement) <= roughness):
         raise OutOfRangeError("Height must exceed displacement plus roughness length.")
-    return karman**2 / np.log((height - displacement) / roughness) ** 2
+    
+    bt_coeff = karman**2 / np.log((height - displacement) / roughness) ** 2
+
+    return bt_coeff
+
+
+def surface_shear_stress(density: float, friction_velocity: float) -> float:
+    """
+    Surface shear stress (momentum flux) from friction velocity.
+
+    Parameters
+    ----------
+    density : Air density (kg/m³), must be positive.
+    friction_velocity : Friction velocity u* (m/s), non-negative.
+
+    Returns
+    -------
+    Surface shear stress in N/m² (Pa).
+
+    Raises
+    ------
+    OutOfRangeError
+        If density is not positive or friction_velocity is negative.
+
+    Notes
+    -----
+    tau = rho * u*^2
+
+    Examples
+    --------
+    >>> print(round(surface_shear_stress(1.225, 0.3), 5))
+    0.11025
+    """
+    if np.any(density <= 0):
+        raise OutOfRangeError("Density must be positive.")
+    if np.any(friction_velocity < 0):
+        raise OutOfRangeError("Friction velocity must be non-negative.")
+    
+    sss = density * friction_velocity**2
+
+    return sss
+
+
+def aerodynamic_resistance(
+    wind_speed: float,
+    height: float,
+    roughness: float,
+    displacement: float = 0.0,
+    karman: float = KARMAN,
+) -> float:
+    """
+    Neutral aerodynamic resistance to turbulent transfer.
+
+    The bulk aerodynamic resistance to momentum or scalar transfer under
+    neutral stability, used in resistance-based flux and Penman-Monteith
+    formulations.
+
+    Parameters
+    ----------
+    wind_speed : Wind speed at the reference height (m/s), must be positive.
+    height : Reference height (m), above displacement + roughness.
+    roughness : Aerodynamic roughness length z0 (m), must be positive.
+    displacement : Zero-plane displacement height d (m), default 0.0.
+    karman : von Kármán constant (default from constants).
+
+    Returns
+    -------
+    Aerodynamic resistance in s/m.
+
+    Raises
+    ------
+    OutOfRangeError
+        If wind_speed or roughness is not positive, or height is not above
+        d + z0.
+
+    Notes
+    -----
+    Neutral form, assuming equal momentum and scalar roughness lengths:
+    ra = ln((z - d) / z0) ** 2 / (k ** 2 * U)
+
+    Examples
+    --------
+    >>> print(round(aerodynamic_resistance(3.0, 10.0, 0.03), 2))
+    70.3
+    """
+    if np.any(wind_speed <= 0):
+        raise OutOfRangeError("Wind speed must be positive.")
+    if np.any(roughness <= 0):
+        raise OutOfRangeError("Roughness length must be positive.")
+    if np.any((height - displacement) <= roughness):
+        raise OutOfRangeError("Height must exceed displacement plus roughness length.")
+    
+    resistance = np.log((height - displacement) / roughness) ** 2 / (karman**2 * wind_speed)
+
+    return resistance
