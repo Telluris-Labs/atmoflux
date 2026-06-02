@@ -12,12 +12,13 @@ authors = [
 ]
 license = "MIT"
 license-files = ["LICENSE"]
-keywords = ["atmospheric science","climate science","micrometeorology","surface energy balance","land-atmosphere exchange",
+keywords = ["atmospheric science","climate science","meteorology","surface energy balance","land-atmosphere exchange",
     "energy fluxes", "radiative fluxes","turbulent fluxes","hydrological fluxes","boundary layer","urban climate"
 ]
 
 classifiers = [
     "Programming Language :: Python :: 3",
+    "Development Status :: 5 - Production/Stable",
     "Operating System :: OS Independent",
     "Intended Audience :: Science/Research",
     "Topic :: Scientific/Engineering :: Atmospheric Science",
