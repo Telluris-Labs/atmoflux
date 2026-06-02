@@ -14,13 +14,13 @@ Thermodynamic properties defining the relationship between moisture and air temp
 '''
 # Specific heat of dry air at constant pressure
 # Measures the thermal energy needed to raise the temperature of 1 kg of dry air by 1 K
-# Units: J/(kg·K)
+# Units: J/(kg·K) (Standard in atmospheric science and meteorology calculations)
 CP_AIR = 1005.0  
 
 # Lv: Latent heat of vaporization of water
 # Measures the thermal energy required to convert 1 kg of water from liquid to vapor
 # Units: J/kg
-LV = 2.45e6  
+LV = 2.26e6  
 
 # Psychrometric Constant
 # Relates the change in air temperature to the change in vapor pressure during evaporation
@@ -32,12 +32,12 @@ PC = 0.066
 # Specific gas constant for dry air
 # Relates pressure, density, and temperature for dry air
 # Units: J/(kg·K)
-R_AIR = 287.058
+R_AIR = 287.05287
 
 # Specific gas constant for water vapor
 # Relates pressure, density, and temperature for water vapor
 # Units: J/(kg·K)
-R_VAPOR = 461.5
+R_VAPOR = 461.52332
 
 # Ratio of the molecular weight of water vapor to dry air
 # Units: Dimensionless factor used in humidity calculations
@@ -61,7 +61,7 @@ STEFAN_BOLTZMANN = 5.670374419e-8
 # Solar constant
 # Mean top-of-atmosphere solar irradiance at 1 astronomical unit
 # Units: W/m²
-SOLAR_CONSTANT = 1361.0
+SOLAR_CONSTANT = 1361.6
 
 '''
 Turbulent-Transfer and Reference Constants
@@ -85,17 +85,22 @@ P0 = 101.325
 # Units: kg/m³
 RHO_WATER = 1000.0
 
+# Standard density of dry air (ISA, 15 °C and sea-level pressure P0)
+# Reference value only; compute actual density with air_density(temp, pressure)
+# Units: kg/m³
+RHO_AIR_STD = 1.225
+
 '''
 Aerosol Microphysical Constants
 Properties of air controlling particle settling and deposition.
 '''
 # Dynamic viscosity of air at ~15 °C
 # Units: Pa·s
-MU_AIR = 1.81e-5
+MU_AIR = 1.789e-5
 
 # Mean free path of air molecules at sea level and ~15 °C
 # Units: m
-MFP_AIR = 6.6e-8
+MFP_AIR = 6.63e-8
 
 '''
 Solar and Astronomical Constants
@@ -104,10 +109,11 @@ Parameters governing solar geometry and extraterrestrial radiation.
 # Solar declination amplitude
 # Maximum tilt of Earth's axis toward the sun (axial obliquity)
 # Units: degrees
-SOLAR_DECLINATION_MAX = 23.45
+SOLAR_DECLINATION_MAX = 23.44
 
 # Angstrom-Prescott regression coefficients
 # Default coefficients relating sunshine duration to clear-sky shortwave
+# FAO-56 standard values
 # Units: dimensionless
 ANGSTROM_A = 0.25
 ANGSTROM_B = 0.50
