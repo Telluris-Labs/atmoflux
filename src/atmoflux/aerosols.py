@@ -12,7 +12,7 @@ from __future__ import annotations
 import numpy as np
 
 # imports from within atmoflux
-from .constants import G, MU_AIR, MFP_AIR
+from .constants import G, MU_AIR, MFP_AIR, RHO_AIR_STD
 from .exceptions import OutOfRangeError
 
 
@@ -49,7 +49,7 @@ def settling_velocity(
     -----
     Stokes settling velocity with slip correction:
     Cc = 1 + (2 * lambda / d) * (1.257 + 0.4 * exp(-1.1 * d / (2 * lambda)))
-    vs = (rho_p * d ** 2 * g * Cc) / (18 * mu)
+    vs = ((rho_p - rho_a) * d ** 2 * g * Cc) / (18 * mu)
     valid in the Stokes regime (small particle Reynolds number).
 
     Examples
@@ -68,7 +68,11 @@ def settling_velocity(
     slip = 1 + knudsen_term * (
         1.257 + 0.4 * np.exp(-1.1 * diameter / (2 * mean_free_path))
     )
-    return particle_density * diameter**2 * G * slip / (18 * viscosity)
+    num = slip * G * diameter**2 * (particle_density - RHO_AIR_STD)
+    den = (18 * viscosity)
+    vs = num / den
+
+    return vs
 
 
 def dry_deposition_velocity(
@@ -110,12 +114,11 @@ def dry_deposition_velocity(
         raise OutOfRangeError("Settling velocity must be non-negative.")
     if np.any(resistance_aero <= 0) or np.any(resistance_surface <= 0):
         raise OutOfRangeError("Resistances must be positive.")
+    
+    den = resistance_aero + resistance_surface + resistance_aero * resistance_surface * settling
+    ddv = settling + 1.0 / den
 
-    return settling + 1.0 / (
-        resistance_aero
-        + resistance_surface
-        + resistance_aero * resistance_surface * settling
-    )
+    return ddv
 
 
 def emission_flux(concentration: float, transfer_velocity: float) -> float:
@@ -147,4 +150,7 @@ def emission_flux(concentration: float, transfer_velocity: float) -> float:
     """
     if np.any(concentration < 0) or np.any(transfer_velocity < 0):
         raise OutOfRangeError("Concentration and transfer velocity must be non-negative.")
-    return transfer_velocity * concentration
+    
+    ef = transfer_velocity * concentration
+
+    return ef
