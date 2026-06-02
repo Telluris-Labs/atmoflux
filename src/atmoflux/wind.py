@@ -13,7 +13,7 @@ from __future__ import annotations
 import numpy as np
 
 # imports from within atmoflux
-from .constants import KARMAN
+from .constants import KARMAN, RHO_AIR_STD
 from .exceptions import InvalidUnitError, OutOfRangeError
 
 # Conversion factors to meters per second.
@@ -58,6 +58,7 @@ def convert_wind_speed(speed: float, from_unit: str, to_unit: str) -> float:
 
     from_unit = from_unit.lower()
     to_unit = to_unit.lower()
+
     if from_unit not in _WIND_TO_MS:
         raise InvalidUnitError(f"from_unit must be one of {set(_WIND_TO_MS)}")
     if to_unit not in _WIND_TO_MS:
@@ -166,6 +167,8 @@ def log_wind_profile(
     >>> print(round(log_wind_profile(5.0, 10.0, 2.0, 0.03), 3))
     3.615
     """
+    if np.any(np.log((height_ref - displacement) / roughness) <= 0):
+        raise OutOfRangeError("Invalid reference height for log law.")
     if np.any(roughness <= 0):
         raise OutOfRangeError("Roughness length must be positive.")
     if np.any((height - displacement) <= roughness) or np.any(
@@ -173,10 +176,9 @@ def log_wind_profile(
     ):
         raise OutOfRangeError("Heights must exceed displacement plus roughness length.")
     
-    lwp = speed_ref * (
-        np.log((height - displacement) / roughness)
-        / np.log((height_ref - displacement) / roughness)
-    )
+    num = np.log((height - displacement) / roughness)
+    den = np.log((height_ref - displacement) / roughness)
+    lwp = speed_ref * (num / den)
 
     return lwp
 
@@ -263,7 +265,11 @@ def friction_velocity(
     if np.any((height - displacement) <= roughness):
         raise OutOfRangeError("Height must exceed displacement plus roughness length.")
     
-    fv = karman * speed / np.log((height - displacement) / roughness)
+    den = np.log((height - displacement) / roughness)
+    fv = karman * speed / den
+
+    if np.any(den <= 0):
+        raise OutOfRangeError("Invalid log-layer condition: denominator must be positive.")
 
     return fv
 
@@ -299,8 +305,10 @@ def wind_shear(
     >>> print(round(wind_shear(3.0, 7.0, 10.0, 50.0), 3))
     0.1
     """
-    if np.any(height_upper == height_lower):
+    if np.any(np.isclose(height_upper, height_lower)):
         raise OutOfRangeError("Upper and lower heights must differ.")
+    if np.any(height_upper < height_lower):
+        raise OutOfRangeError("Upper height must be greater than lower height.")
     
     shear = (speed_upper - speed_lower) / (height_upper - height_lower)
 
@@ -352,7 +360,7 @@ def wind_components(speed: float, direction: float) -> tuple:
     return u, v
 
 
-def wind_power_density(speed: float, density: float = 1.225) -> float:
+def wind_power_density(speed: float, density: float = RHO_AIR_STD) -> float:
     """
     Wind power density of the airflow.
 
