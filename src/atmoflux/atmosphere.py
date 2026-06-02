@@ -52,8 +52,10 @@ def scale_height(temp: float, unit: str = "C") -> float:
     8434.7
     """
     temp_K = convert_temperature(temp, unit.upper(), "K")
+
+    sh = R_AIR * temp_K / G
     
-    return R_AIR * temp_K / G
+    return sh
 
 
 def pressure_at_altitude(
@@ -99,7 +101,9 @@ def pressure_at_altitude(
     
     height = scale_height(temp, unit)
 
-    return pressure_ref * np.exp(-altitude / height)
+    pa = pressure_ref * np.exp(-altitude / height)
+
+    return pa
 
 
 def hypsometric_thickness(
@@ -146,8 +150,9 @@ def hypsometric_thickness(
         raise OutOfRangeError("Upper pressure must be below lower pressure.")
     
     temp_K = convert_temperature(temp, unit.upper(), "K")
+    thickness = (R_AIR * temp_K / G) * np.log(pressure_lower / pressure_upper)
 
-    return (R_AIR * temp_K / G) * np.log(pressure_lower / pressure_upper)
+    return thickness
 
 
 def density_altitude(pressure: float, temp: float, unit: str = "C") -> float:
@@ -194,8 +199,9 @@ def density_altitude(pressure: float, temp: float, unit: str = "C") -> float:
     rho = (pressure * 1000.0) / (R_AIR * temp_K)
     rho0 = (P0 * 1000.0) / (R_AIR * T0_STANDARD)
     exponent = (LAPSE_RATE_STANDARD * R_AIR) / (G - LAPSE_RATE_STANDARD * R_AIR)
+    density = (T0_STANDARD / LAPSE_RATE_STANDARD) * (1 - (rho / rho0) ** exponent)
 
-    return (T0_STANDARD / LAPSE_RATE_STANDARD) * (1 - (rho / rho0) ** exponent)
+    return density
 
 
 def standard_atmosphere(altitude: float, unit: str = "C") -> tuple:
