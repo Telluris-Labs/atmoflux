@@ -65,10 +65,10 @@ def settling_velocity(
         raise OutOfRangeError("Particle density must be positive.")
 
     knudsen_term = 2 * mean_free_path / diameter
-    slip = 1 + knudsen_term * (
+    cc = 1 + knudsen_term * (
         1.257 + 0.4 * np.exp(-1.1 * diameter / (2 * mean_free_path))
     )
-    num = slip * G * diameter**2 * (particle_density - RHO_AIR_STD)
+    num = cc * G * diameter**2 * (particle_density - RHO_AIR_STD)
     den = (18 * viscosity)
     vs = num / den
 
@@ -116,9 +116,9 @@ def dry_deposition_velocity(
         raise OutOfRangeError("Resistances must be positive.")
     
     den = resistance_aero + resistance_surface + resistance_aero * resistance_surface * settling
-    ddv = settling + 1.0 / den
+    vd = settling + 1.0 / den
 
-    return ddv
+    return vd
 
 
 def emission_flux(concentration: float, transfer_velocity: float) -> float:
@@ -151,6 +151,6 @@ def emission_flux(concentration: float, transfer_velocity: float) -> float:
     if np.any(concentration < 0) or np.any(transfer_velocity < 0):
         raise OutOfRangeError("Concentration and transfer velocity must be non-negative.")
     
-    ef = transfer_velocity * concentration
+    f = transfer_velocity * concentration
 
-    return ef
+    return f

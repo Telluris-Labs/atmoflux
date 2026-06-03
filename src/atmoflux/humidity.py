@@ -51,9 +51,9 @@ def saturation_vp(temp: float, unit: str = "C") -> float:
     else:
         temp_C = temp
 
-    svp = SVP_A * np.exp((SVP_B * temp_C) / (temp_C + SVP_C))
+    es = SVP_A * np.exp((SVP_B * temp_C) / (temp_C + SVP_C))
 
-    return svp
+    return es
 
 
 def actual_vp(dewpoint: float, unit: str = "C") -> float:
@@ -88,9 +88,9 @@ def actual_vp(dewpoint: float, unit: str = "C") -> float:
     else:
         Td_C = dewpoint
 
-    avp = SVP_A * np.exp((SVP_B * Td_C) / (Td_C + SVP_C))
+    e = SVP_A * np.exp((SVP_B * Td_C) / (Td_C + SVP_C))
 
-    return avp
+    return e
 
 
 def saturation_vp_slope(temp: float, unit: str = "C") -> float:
@@ -134,9 +134,9 @@ def saturation_vp_slope(temp: float, unit: str = "C") -> float:
         temp_C = temp
 
     es = saturation_vp(temp_C, "C")
-    slope = 4098.0 * es / (temp_C + SVP_C) ** 2
+    delta = 4098.0 * es / (temp_C + SVP_C) ** 2
 
-    return slope
+    return delta
 
 
 def relative_humidity(temp: float, dewpoint: float, unit: str = "C") -> float:
@@ -245,9 +245,9 @@ def mixing_ratio(vapor_pressure: float, pressure: float) -> float:
     if np.any(pressure <= vapor_pressure):
         raise OutOfRangeError("Total pressure must exceed vapor pressure.")
     
-    mixing = RMW * vapor_pressure / (pressure - vapor_pressure)
+    w = RMW * vapor_pressure / (pressure - vapor_pressure)
 
-    return mixing
+    return w
 
 
 def vapor_pressure_deficit(temp: float, rh: float, unit: str = "C") -> float:
@@ -327,10 +327,10 @@ def absolute_humidity(vapor_pressure: float, temp: float, unit: str = "C") -> fl
     temp_K = convert_temperature(temp, unit.upper(), "K")
 
     # Convert vapor pressure from kPa to Pa for SI consistency.
-    e_pa = vapor_pressure * 1000.0
-    absolute = e_pa / (R_VAPOR * temp_K)
+    e = vapor_pressure * 1000.0
+    rho_v = e / (R_VAPOR * temp_K)
 
-    return absolute
+    return rho_v
 
 
 def saturation_vp_ice(temp: float, unit: str = "C") -> float:
@@ -363,9 +363,9 @@ def saturation_vp_ice(temp: float, unit: str = "C") -> float:
     0.2595
     """
     temp_C = convert_temperature(temp, unit.upper(), "C")
-    svp_ice = SVP_A * np.exp(21.875 * temp_C / (temp_C + 265.5))
+    es_ice = SVP_A * np.exp(21.875 * temp_C / (temp_C + 265.5))
 
-    return svp_ice
+    return es_ice
 
 
 def specific_humidity_from_dewpoint(
@@ -500,6 +500,6 @@ def precipitable_water(specific_humidity: float, pressure: float) -> float:
     p_pa = pressure * 1000.0
 
     # Depth of water in meters, converted to millimeters.
-    depth = specific_humidity * p_pa / (rho_water * g) * 1000.0
+    pw = specific_humidity * p_pa / (rho_water * g) * 1000.0
 
-    return depth
+    return pw

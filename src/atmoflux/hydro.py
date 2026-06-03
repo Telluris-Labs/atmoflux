@@ -55,11 +55,13 @@ def latent_heat_to_evaporation(
     """
     if np.any(density_water <= 0):
         raise OutOfRangeError("Water density must be positive.")
+    if latent_heat < 0:
+        raise OutOfRangeError("Latent heat flux must be non-negative.")
     
     e_m_per_s = latent_heat / (LV * density_water)
-    evap = e_m_per_s * 1000.0 * _SECONDS_PER_DAY
+    e = e_m_per_s * 1000.0 * _SECONDS_PER_DAY
 
-    return evap
+    return e
 
 
 def _psychrometric_constant(pressure: float) -> float:
@@ -67,9 +69,9 @@ def _psychrometric_constant(pressure: float) -> float:
     Psychrometric constant (kPa/°C) at a given pressure (kPa).
     For more precise calculation when pressure is known.
     """
-    cp = CP_AIR * pressure / (RMW * LV)
+    gamma = CP_AIR * pressure / (RMW * LV)
 
-    return cp
+    return gamma
 
 
 def penman_evaporation(
@@ -133,9 +135,9 @@ def penman_evaporation(
 
     aerodynamic = 6.43 * (1 + 0.536 * wind_2m) * (es - ea)
     numerator = delta * (net_radiation - ground_heat) + gamma * aerodynamic
-    pe = numerator / (lam * (delta + gamma))
+    et = numerator / (lam * (delta + gamma))
 
-    return pe
+    return et
 
 
 def penman_monteith(
@@ -207,9 +209,9 @@ def penman_monteith(
     numerator = delta * available + density * CP_AIR * vpd_pa / resistance_aero
     denominator = delta + gamma * (1 + resistance_surface / resistance_aero)
     latent_heat = numerator / denominator
-    pm = latent_heat_to_evaporation(latent_heat)
+    lambda_E = latent_heat_to_evaporation(latent_heat)
 
-    return pm
+    return lambda_E
 
 
 def potential_evapotranspiration(
@@ -272,9 +274,9 @@ def potential_evapotranspiration(
     radiation_term = 0.408 * delta * (net_radiation - ground_heat)
     aero_term = gamma * (900.0 / (temp_C + 273.0)) * wind_2m * (es - ea)
     denominator = delta + gamma * (1 + 0.34 * wind_2m)
-    p_evap = (radiation_term + aero_term) / denominator
+    et0 = (radiation_term + aero_term) / denominator
 
-    return p_evap
+    return et0
 
 
 def equilibrium_evaporation(
@@ -323,9 +325,9 @@ def equilibrium_evaporation(
     delta = saturation_vp_slope(temp_C, "C")
     gamma = _psychrometric_constant(pressure)
     lam = LV / 1.0e6  # latent heat in MJ/kg
-    eq_evap = (delta / (delta + gamma)) * (net_radiation - ground_heat) / lam
+    E_eq = (delta / (delta + gamma)) * (net_radiation - ground_heat) / lam
 
-    return eq_evap
+    return E_eq
 
 
 def priestley_taylor(
@@ -375,10 +377,10 @@ def priestley_taylor(
     if np.any(alpha <= 0):
         raise OutOfRangeError("Priestley-Taylor coefficient must be positive.")
     
-    e_eq = equilibrium_evaporation(net_radiation, ground_heat, temp, pressure, unit)
-    pt_evap = alpha * e_eq
+    E_eq = equilibrium_evaporation(net_radiation, ground_heat, temp, pressure, unit)
+    E_pt = alpha * E_eq
 
-    return pt_evap
+    return E_pt
 
 
 def hargreaves(
@@ -433,7 +435,7 @@ def hargreaves(
     if np.any(t_max_C < t_min_C):
         raise OutOfRangeError("Maximum temperature must be at least the minimum.")
     
-    ref_et = (
+    et0 = (
         0.0023
         * (t_mean_C + 17.8)
         * (t_max_C - t_min_C) ** 0.5
@@ -441,4 +443,4 @@ def hargreaves(
         * extraterrestrial
     )
 
-    return ref_et
+    return et0

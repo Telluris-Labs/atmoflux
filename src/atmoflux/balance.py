@@ -48,7 +48,9 @@ def surface_energy_residual(
     >>> surface_energy_residual(400.0, 150.0, 200.0, 50.0)
     0.0
     """
-    return net_radiation - ground_heat - sensible_heat - latent_heat
+    residual = net_radiation - ground_heat - sensible_heat - latent_heat
+
+    return residual
 
 
 def bowen_ratio(sensible_heat: float, latent_heat: float) -> float:
@@ -76,12 +78,12 @@ def bowen_ratio(sensible_heat: float, latent_heat: float) -> float:
     0.75
     """
     with np.errstate(divide="ignore", invalid="ignore"):
-        ratio = np.divide(sensible_heat, latent_heat)
+        beta = np.divide(sensible_heat, latent_heat)
 
-    if np.ndim(ratio) == 0:
-        return float(ratio)
+    if np.ndim(beta) == 0:
+        return float(beta)
     
-    return ratio
+    return beta
 
 
 def energy_balance(
@@ -146,7 +148,9 @@ def available_energy(net_radiation: float, ground_heat: float = 0.0) -> float:
     >>> available_energy(400.0, 50.0)
     350.0
     """
-    return net_radiation - ground_heat
+    a = net_radiation - ground_heat
+    
+    return a
 
 
 def energy_balance_ratio(
@@ -186,12 +190,12 @@ def energy_balance_ratio(
     available = net_radiation - ground_heat
 
     with np.errstate(divide="ignore", invalid="ignore"):
-        ratio = np.divide(sensible_heat + latent_heat, available)
+        ebr = np.divide(sensible_heat + latent_heat, available)
 
-    if np.ndim(ratio) == 0:
-        return float(ratio)
+    if np.ndim(ebr) == 0:
+        return float(ebr)
     
-    return ratio
+    return ebr
 
 
 def ground_heat_fraction(net_radiation: float, fraction: float = 0.1) -> float:
@@ -229,4 +233,6 @@ def ground_heat_fraction(net_radiation: float, fraction: float = 0.1) -> float:
     if np.any(fraction < 0) or np.any(fraction > 1):
         raise OutOfRangeError("Fraction must be in the interval [0, 1].")
     
-    return fraction * net_radiation
+    g = fraction * net_radiation
+    
+    return g
