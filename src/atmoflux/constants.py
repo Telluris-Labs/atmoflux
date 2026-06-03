@@ -20,7 +20,7 @@ CP_AIR = 1005.0
 # Lv: Latent heat of vaporization of water
 # Measures the thermal energy required to convert 1 kg of water from liquid to vapor
 # Units: J/kg
-LV = 2.26e6  
+LV = 2.45e6  
 
 # Psychrometric Constant
 # Relates the change in air temperature to the change in vapor pressure during evaporation

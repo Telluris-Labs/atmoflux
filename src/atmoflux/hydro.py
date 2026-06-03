@@ -55,8 +55,6 @@ def latent_heat_to_evaporation(
     """
     if np.any(density_water <= 0):
         raise OutOfRangeError("Water density must be positive.")
-    if latent_heat < 0:
-        raise OutOfRangeError("Latent heat flux must be non-negative.")
     
     e_m_per_s = latent_heat / (LV * density_water)
     e = e_m_per_s * 1000.0 * _SECONDS_PER_DAY

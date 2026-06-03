@@ -517,7 +517,7 @@ def equivalent_potential_temperature(
     temp_K = convert_temperature(temp, unit.upper(), "K")
     theta = potential_temperature(temp_K, pressure, unit="K")
     theta_e = theta * np.exp(LV * mixing_ratio / (CP_AIR * temp_K))
-    theta_e_T = convert_temperature(theta_e, unit, unit.upper())
+    theta_e_T = convert_temperature(theta_e, "K", unit.upper())
 
     return theta_e_T
 
