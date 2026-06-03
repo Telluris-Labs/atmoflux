@@ -178,9 +178,9 @@ def log_wind_profile(
     
     num = np.log((height - displacement) / roughness)
     den = np.log((height_ref - displacement) / roughness)
-    lwp = speed_ref * (num / den)
+    u_z = speed_ref * (num / den)
 
-    return lwp
+    return u_z
 
 
 def power_law_profile(
@@ -218,9 +218,9 @@ def power_law_profile(
     if np.any(height <= 0) or np.any(height_ref <= 0):
         raise OutOfRangeError("Heights must be positive.")
     
-    plp = speed_ref * (height / height_ref) ** exponent
+    u_z = speed_ref * (height / height_ref) ** exponent
 
-    return plp
+    return u_z
 
 
 def friction_velocity(
@@ -266,12 +266,12 @@ def friction_velocity(
         raise OutOfRangeError("Height must exceed displacement plus roughness length.")
     
     den = np.log((height - displacement) / roughness)
-    fv = karman * speed / den
+    u = karman * speed / den
 
     if np.any(den <= 0):
         raise OutOfRangeError("Invalid log-layer condition: denominator must be positive.")
 
-    return fv
+    return u
 
 
 def wind_shear(
@@ -395,9 +395,9 @@ def wind_power_density(speed: float, density: float = RHO_AIR_STD) -> float:
     if np.any(density <= 0):
         raise OutOfRangeError("Density must be positive.")
     
-    wpd = 0.5 * density * speed**3
+    p = 0.5 * density * speed**3
 
-    return wpd
+    return p
 
 
 def roughness_from_canopy(canopy_height: float) -> float:
@@ -430,9 +430,9 @@ def roughness_from_canopy(canopy_height: float) -> float:
     if np.any(canopy_height <= 0):
         raise OutOfRangeError("Canopy height must be positive.")
     
-    roughness = 0.1 * canopy_height
+    z0 = 0.1 * canopy_height
 
-    return roughness
+    return z0
 
 
 def displacement_from_canopy(canopy_height: float) -> float:
@@ -465,6 +465,6 @@ def displacement_from_canopy(canopy_height: float) -> float:
     if np.any(canopy_height <= 0):
         raise OutOfRangeError("Canopy height must be positive.")
     
-    displacement = 0.67 * canopy_height
+    d = 0.67 * canopy_height
 
-    return displacement
+    return d

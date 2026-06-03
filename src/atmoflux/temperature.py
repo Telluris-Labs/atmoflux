@@ -253,9 +253,9 @@ def potential_temperature(
 
     temp_K = convert_temperature(temp, unit.upper(), "K")
     theta_K = temp_K * (reference_pressure / pressure) ** (R_AIR / CP_AIR)
-    pt = convert_temperature(theta_K, "K", unit.upper())
+    theta = convert_temperature(theta_K, "K", unit.upper())
 
-    return pt
+    return theta
 
 
 def virtual_temperature(temp: float, mixing_ratio: float, unit: str = "K") -> float:
@@ -300,9 +300,9 @@ def virtual_temperature(temp: float, mixing_ratio: float, unit: str = "K") -> fl
 
     temp_K = convert_temperature(temp, unit.upper(), "K")
     tv_K = temp_K * (1 + 0.61 * mixing_ratio)
-    vt = convert_temperature(tv_K, "K", unit.upper())
+    tv = convert_temperature(tv_K, "K", unit.upper())
 
-    return vt
+    return tv
 
 
 def lapse_rate(
@@ -358,9 +358,9 @@ def lapse_rate(
 
     t_lower_K = convert_temperature(temp_lower, unit.upper(), "K")
     t_upper_K = convert_temperature(temp_upper, unit.upper(), "K")
-    lapse = -(t_upper_K - t_lower_K) / (height_upper - height_lower)
+    gamma = -(t_upper_K - t_lower_K) / (height_upper - height_lower)
 
-    return lapse
+    return gamma
 
 
 def surface_temperature_from_lw(
@@ -409,9 +409,9 @@ def surface_temperature_from_lw(
         raise OutOfRangeError("Emissivity must be in the interval (0, 1].")
 
     ts_K = (lw_up / (emissivity * STEFAN_BOLTZMANN)) ** 0.25
-    st = convert_temperature(ts_K, "K", unit.upper())
+    ts = convert_temperature(ts_K, "K", unit.upper())
 
-    return st
+    return ts
 
 
 def wet_bulb_temperature(temp: float, rh: float, unit: str = "C") -> float:
@@ -517,9 +517,9 @@ def equivalent_potential_temperature(
     temp_K = convert_temperature(temp, unit.upper(), "K")
     theta = potential_temperature(temp_K, pressure, unit="K")
     theta_e = theta * np.exp(LV * mixing_ratio / (CP_AIR * temp_K))
-    eq_pt = convert_temperature(theta_e, "K", unit.upper())
+    theta_e_T = convert_temperature(theta_e, unit, unit.upper())
 
-    return eq_pt
+    return theta_e_T
 
 
 def moist_adiabatic_lapse_rate(temp: float, mixing_ratio: float, unit: str = "C") -> float:
@@ -566,6 +566,6 @@ def moist_adiabatic_lapse_rate(temp: float, mixing_ratio: float, unit: str = "C"
     r_vapor = 461.5
     numerator = G * (1 + LV * mixing_ratio / (R_AIR * temp_K))
     denominator = CP_AIR + (LV**2 * mixing_ratio) / (r_vapor * temp_K**2)
-    lapse = numerator / denominator
+    gamma_m = numerator / denominator
     
-    return lapse
+    return gamma_m

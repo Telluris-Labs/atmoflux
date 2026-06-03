@@ -76,9 +76,9 @@ def bulk_richardson_number(
     t_mean = (t_lower_K + t_upper_K) / 2.0
     dz = height_upper - height_lower
     dtheta = t_upper_K - t_lower_K
-    br_num = (G * dtheta * dz) / (t_mean * wind_upper**2)
+    rb = (G * dtheta * dz) / (t_mean * wind_upper**2)
 
-    return br_num
+    return rb
 
 
 def obukhov_length(
@@ -133,11 +133,11 @@ def obukhov_length(
         raise OutOfRangeError("Sensible heat flux must be nonzero.")
     
     temp_K = convert_temperature(temp, unit.upper(), "K")
-    ol = -(density * CP_AIR * temp_K * friction_velocity**3) / (
+    l = -(density * CP_AIR * temp_K * friction_velocity**3) / (
         KARMAN * G * sensible_heat_flux
     )
 
-    return ol
+    return l
 
 
 def stability_parameter(height: float, obukhov_length: float) -> float:

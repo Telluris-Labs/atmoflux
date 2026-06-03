@@ -90,9 +90,9 @@ def solar_declination(doy: int) -> float:
         raise OutOfRangeError("Day of year must be in [1, 366].")
     
     angle = np.radians(360.0 * (284 + doy) / 365.0)
-    sd = SOLAR_DECLINATION_MAX * np.sin(angle)
+    delta = SOLAR_DECLINATION_MAX * np.sin(angle)
 
-    return sd
+    return delta
 
 
 def hour_angle(solar_time: float) -> float:
@@ -129,9 +129,9 @@ def hour_angle(solar_time: float) -> float:
     if np.any(solar_time < 0) or np.any(solar_time >= 24):
         raise OutOfRangeError("Solar time must be in [0, 24).")
     
-    hr_a = 15.0 * (solar_time - 12.0)
+    h = 15.0 * (solar_time - 12.0)
 
-    return hr_a
+    return h
 
 
 def solar_zenith_angle(latitude: float, declination: float, hour_angle: float) -> float:
@@ -167,9 +167,9 @@ def solar_zenith_angle(latitude: float, declination: float, hour_angle: float) -
     ha = np.radians(hour_angle)
     cos_z = np.sin(lat) * np.sin(dec) + np.cos(lat) * np.cos(dec) * np.cos(ha)
     cos_z = np.clip(cos_z, -1.0, 1.0)
-    sza = np.degrees(np.arccos(cos_z))
+    theta_z = np.degrees(np.arccos(cos_z))
 
-    return sza
+    return theta_z
 
 
 def solar_elevation(latitude: float, declination: float, hour_angle: float) -> float:
@@ -196,9 +196,9 @@ def solar_elevation(latitude: float, declination: float, hour_angle: float) -> f
     >>> print(round(solar_elevation(40.0, 20.0, 0.0), 2))
     70.0
     """
-    s_elev = 90.0 - solar_zenith_angle(latitude, declination, hour_angle)
+    alpha = 90.0 - solar_zenith_angle(latitude, declination, hour_angle)
 
-    return s_elev
+    return alpha
 
 
 def sunset_hour_angle(latitude: float, declination: float) -> float:
@@ -228,9 +228,9 @@ def sunset_hour_angle(latitude: float, declination: float) -> float:
     lat = np.radians(latitude)
     dec = np.radians(declination)
     cos_hs = np.clip(-np.tan(lat) * np.tan(dec), -1.0, 1.0)
-    s_hr_a =  np.degrees(np.arccos(cos_hs))
+    hs =  np.degrees(np.arccos(cos_hs))
 
-    return s_hr_a
+    return hs
 
 
 def daylight_hours(latitude: float, declination: float) -> float:
@@ -256,9 +256,9 @@ def daylight_hours(latitude: float, declination: float) -> float:
     >>> print(round(daylight_hours(0.0, 0.0), 2))
     12.0
     """
-    d_hrs = (2.0 / 15.0) * sunset_hour_angle(latitude, declination)
+    n = (2.0 / 15.0) * sunset_hour_angle(latitude, declination)
 
-    return d_hrs
+    return n
 
 
 def extraterrestrial_radiation(latitude: float, doy: int) -> float:
@@ -303,7 +303,7 @@ def extraterrestrial_radiation(latitude: float, doy: int) -> float:
     hs = np.radians(sunset_hour_angle(latitude, solar_declination(doy)))
     dr = 1 + 0.033 * np.cos(2 * np.pi * doy / 365.0)
 
-    # Solar constant in MJ/(m^2 min): 1361 W/m^2 * 60 s / 1e6
+    # Solar constant in MJ/(m^2 min): 1361.6 W/m^2 * 60 s / 1e6
     gsc_mj = SOLAR_CONSTANT * 60.0 / 1.0e6
     ra = (
         (24 * 60 / np.pi)
@@ -361,6 +361,6 @@ def clear_sky_radiation(
     if np.any(daylight <= 0):
         raise OutOfRangeError("Daylight duration must be positive.")
     
-    csr = (a + b * sunshine_hours / daylight) * extraterrestrial
+    rs = (a + b * sunshine_hours / daylight) * extraterrestrial
 
-    return csr
+    return rs

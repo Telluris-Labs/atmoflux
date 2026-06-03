@@ -58,9 +58,9 @@ def blackbody_radiation(
         raise OutOfRangeError("Emissivity must be in the interval (0, 1].")
     
     temp_K = convert_temperature(temp, unit.upper(), "K")
-    br = emissivity * STEFAN_BOLTZMANN * temp_K**4
+    l = emissivity * STEFAN_BOLTZMANN * temp_K**4
 
-    return br
+    return l
 
 
 def net_shortwave(sw_down: float, albedo: float) -> float:
@@ -93,9 +93,9 @@ def net_shortwave(sw_down: float, albedo: float) -> float:
     if np.any(albedo < 0) or np.any(albedo > 1):
         raise OutOfRangeError("Albedo must be in the interval [0, 1].")
     
-    net_sw = sw_down * (1 - albedo)
+    sw_net = sw_down * (1 - albedo)
 
-    return net_sw
+    return sw_net
 
 
 def net_longwave(
@@ -139,9 +139,9 @@ def net_longwave(
     
     ts_K = convert_temperature(temp_surface, unit.upper(), "K")
     lw_up = emissivity * STEFAN_BOLTZMANN * ts_K**4 + (1 - emissivity) * lw_down
-    net_lw = lw_down - lw_up
+    lw_net = lw_down - lw_up
 
-    return net_lw
+    return lw_net
 
 
 def net_radiation(
@@ -236,9 +236,9 @@ def clear_sky_emissivity(temp_air: float, vapor_pressure: float, unit: str = "C"
     
     temp_K = convert_temperature(temp_air, unit.upper(), "K")
     e_hpa = vapor_pressure * 10.0  # kPa -> hPa
-    cse = 1.24 * (e_hpa / temp_K) ** (1.0 / 7.0)
+    ecs = 1.24 * (e_hpa / temp_K) ** (1.0 / 7.0)
 
-    return cse
+    return ecs
 
 
 def net_longwave_cloud(
@@ -294,9 +294,9 @@ def net_longwave_cloud(
     temp_K = convert_temperature(temp_air, unit.upper(), "K")
     emissivity_term = 0.34 - 0.14 * np.sqrt(vapor_pressure)
     cloud_term = 1.35 * cloud_fraction - 0.35
-    net_lw = STEFAN_BOLTZMANN * temp_K**4 * emissivity_term * cloud_term
+    rnl = STEFAN_BOLTZMANN * temp_K**4 * emissivity_term * cloud_term
 
-    return net_lw
+    return rnl
 
 
 def diffuse_fraction(clearness_index: float) -> float:

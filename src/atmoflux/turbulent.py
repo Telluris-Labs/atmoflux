@@ -55,9 +55,9 @@ def air_density(temp: float, pressure: float, unit: str = "C") -> float:
     
     temp_K = convert_temperature(temp, unit.upper(), "K")
     p_pa = pressure * 1000.0  # kPa -> Pa
-    density = p_pa / (R_AIR * temp_K)
+    rho = p_pa / (R_AIR * temp_K)
 
-    return density
+    return rho
 
 
 def sensible_heat_flux(
@@ -103,9 +103,9 @@ def sensible_heat_flux(
     """
     ts_K = convert_temperature(temp_surface, unit.upper(), "K")
     ta_K = convert_temperature(temp_air, unit.upper(), "K")
-    sshf = density * CP_AIR * transfer_coeff * wind_speed * (ts_K - ta_K)
+    h = density * CP_AIR * transfer_coeff * wind_speed * (ts_K - ta_K)
 
-    return sshf
+    return h
 
 
 def latent_heat_flux(
@@ -140,9 +140,9 @@ def latent_heat_flux(
     >>> print(round(latent_heat_flux(1.2, 3.0, 0.008, 0.012, 0.0013), 4))
     45.864
     """
-    slhf = density * LV * transfer_coeff * wind_speed * (q_surface - q_air)
+    le = density * LV * transfer_coeff * wind_speed * (q_surface - q_air)
 
-    return slhf
+    return le
 
 
 def bulk_transfer_coefficient(
@@ -182,9 +182,9 @@ def bulk_transfer_coefficient(
     if np.any((height - displacement) <= roughness):
         raise OutOfRangeError("Height must exceed displacement plus roughness length.")
     
-    bt_coeff = karman**2 / np.log((height - displacement) / roughness) ** 2
+    c = karman**2 / np.log((height - displacement) / roughness) ** 2
 
-    return bt_coeff
+    return c
 
 
 def surface_shear_stress(density: float, friction_velocity: float) -> float:
@@ -219,9 +219,9 @@ def surface_shear_stress(density: float, friction_velocity: float) -> float:
     if np.any(friction_velocity < 0):
         raise OutOfRangeError("Friction velocity must be non-negative.")
     
-    sss = density * friction_velocity**2
+    tau = density * friction_velocity**2
 
-    return sss
+    return tau
 
 
 def aerodynamic_resistance(
@@ -273,6 +273,6 @@ def aerodynamic_resistance(
     if np.any((height - displacement) <= roughness):
         raise OutOfRangeError("Height must exceed displacement plus roughness length.")
     
-    resistance = np.log((height - displacement) / roughness) ** 2 / (karman**2 * wind_speed)
+    ra = np.log((height - displacement) / roughness) ** 2 / (karman**2 * wind_speed)
 
-    return resistance
+    return ra
