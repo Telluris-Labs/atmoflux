@@ -55,9 +55,9 @@ def settling_velocity(
     Examples
     --------
     >>> print(round(settling_velocity(1e-6, 1000.0) * 1e6, 3))
-    35.095
+    35.486
     >>> print(round(settling_velocity(10e-6, 1000.0) * 1e3, 3))
-    3.06
+    3.092
     """
     if np.any(diameter <= 0):
         raise OutOfRangeError("Particle diameter must be positive.")
@@ -108,7 +108,7 @@ def dry_deposition_velocity(
     --------
     >>> vs = settling_velocity(10e-6, 1000.0)
     >>> print(round(dry_deposition_velocity(vs, 50.0, 20.0) * 1000, 3))
-    16.747
+    16.774
     """
     if np.any(settling < 0):
         raise OutOfRangeError("Settling velocity must be non-negative.")

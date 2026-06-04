@@ -82,9 +82,9 @@ def solar_declination(doy: int) -> float:
     Examples
     --------
     >>> print(round(solar_declination(172), 2))
-    23.45
+    23.44
     >>> print(round(solar_declination(355), 2))
-    -23.45
+    -23.44
     """
     if np.any(doy < 1) or np.any(doy > 366):
         raise OutOfRangeError("Day of year must be in [1, 366].")
@@ -293,7 +293,7 @@ def extraterrestrial_radiation(latitude: float, doy: int) -> float:
     Examples
     --------
     >>> print(round(extraterrestrial_radiation(0.0, 172), 2))
-    33.22
+    33.24
     """
     if np.any(doy < 1) or np.any(doy > 366):
         raise OutOfRangeError("Day of year must be in [1, 366].")

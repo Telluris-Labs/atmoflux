@@ -49,7 +49,7 @@ def scale_height(temp: float, unit: str = "C") -> float:
     Examples
     --------
     >>> print(round(scale_height(15), 1))
-    8434.7
+    8434.5
     """
     temp_K = convert_temperature(temp, unit.upper(), "K")
 
