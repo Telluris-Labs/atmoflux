@@ -8,7 +8,7 @@ turbulent, hydrological, aerosol, and energy balance applications.
 """
 
 # Package metadata
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 __author__ = "Telluris Labs"
 __email__ = "info@tellurislabs.io"
 __license__ = "MIT"
