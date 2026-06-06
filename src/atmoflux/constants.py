@@ -106,10 +106,10 @@ MFP_AIR = 6.63e-8
 Solar and Astronomical Constants
 Parameters governing solar geometry and extraterrestrial radiation.
 '''
-# Solar declination amplitude
+# Solar declination amplitude (Cooper. 1969)
 # Maximum tilt of Earth's axis toward the sun (axial obliquity)
 # Units: degrees
-SOLAR_DECLINATION_MAX = 23.44
+SOLAR_DECLINATION_MAX = 23.45
 
 # Angstrom-Prescott regression coefficients
 # Default coefficients relating sunshine duration to clear-sky shortwave
