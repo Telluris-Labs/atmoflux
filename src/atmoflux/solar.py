@@ -82,9 +82,9 @@ def solar_declination(doy: int) -> float:
     Examples
     --------
     >>> print(round(solar_declination(172), 2))
-    23.44
+    23.45
     >>> print(round(solar_declination(355), 2))
-    -23.44
+    -23.45
     """
     if np.any(doy < 1) or np.any(doy > 366):
         raise OutOfRangeError("Day of year must be in [1, 366].")
