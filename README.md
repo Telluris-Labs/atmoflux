@@ -73,7 +73,7 @@ print(eb.bowen_ratio)    # H / LE
 
 ## Modules
 
-**State variables**
+**Atmospheric state**
 
 | Module | Description |
 | --- | --- |
@@ -82,24 +82,28 @@ print(eb.bowen_ratio)    # H / LE
 | `wind` | Speed unit conversion, vector components, log and power-law profiles, friction velocity, shear, wind power density, canopy-derived roughness and displacement |
 | `atmosphere` | Scale height, barometric pressure with altitude, hypsometric thickness, density altitude, US Standard Atmosphere profile |
 
-**Flux / process**
+**Radiation**
+| Module | Description |
+| --- | --- |
+| `solar` | Solar declination, hour angle, zenith and elevation, daylight hours, extraterrestrial and clear-sky shortwave radiation |
+| `radiative` | Blackbody emission, net shortwave and longwave (clear-sky and cloud-adjusted), net radiation, clear-sky emissivity, diffuse fraction |
+
+**Surface fluxes**
 
 | Module | Description |
 | --- | --- |
-| `radiative` | Blackbody emission, net shortwave and longwave (clear-sky and cloud-adjusted), net radiation, clear-sky emissivity, diffuse fraction |
-| `solar` | Solar declination, hour angle, zenith and elevation, daylight hours, extraterrestrial and clear-sky shortwave radiation |
 | `turbulent` | Air density, bulk-aerodynamic sensible and latent heat fluxes, transfer coefficients, surface shear stress, aerodynamic resistance |
 | `stability` | Bulk Richardson number, Obukhov length, stability parameter and correction functions, stability classification |
 | `hydro` | Latent-heat-to-evaporation conversion, Penman, Penman-Monteith, FAO-56 reference ET, Priestley-Taylor, Hargreaves, equilibrium evaporation |
 | `aerosols` | Gravitational settling, dry deposition, surface emission flux |
 | `balance` | Energy budget residual, Bowen ratio, available energy, energy balance ratio, ground heat fraction, `EnergyBalance` assembly |
 
-**Support**
+**Core & utilities**
 
 | Module | Description |
 | --- | --- |
-| `constants` | Physical and derived constants with documented units |
 | `core` | Shared data structures, including the `EnergyBalance` and `AtmosphericState` containers |
+| `constants` | Physical and derived constants with documented units |
 | `exceptions` | Package exception hierarchy rooted at `AtmofluxError` |
 
 ## Testing

@@ -14,39 +14,42 @@ __email__ = "info@tellurislabs.io"
 __license__ = "MIT"
 __description__ = "Custom tools for climate data processing and analysis"
 
-# State and constants
+# Atmospheric state
 from . import temperature
 from . import humidity
 from . import wind
-from . import constants
 from . import atmosphere
 
-# Flux / process modules
-from . import radiative
+# Radiation
 from . import solar
+from . import radiative
+
+# Surface fluxes
+
 from . import turbulent
 from . import stability
 from . import hydro
 from . import aerosols
 from . import balance
 
-# Shared core abstractions
+# Core & utilities
 from . import core
+from . import constants
 from . import exceptions
 
 __all__ = [
     "temperature",
     "humidity",
     "wind",
-    "constants",
     "atmosphere",
-    "radiative",
     "solar",
+    "radiative",
     "turbulent",
     "stability",
     "hydro",
     "aerosols",
     "balance",
     "core",
+    "constants",
     "exceptions",
 ]
