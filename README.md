@@ -118,6 +118,10 @@ pytest atmoflux/tests/
 pytest --doctest-modules atmoflux/
 ```
 
+## Changelog
+
+See [`CHANGELOG.md`](CHANGELOG.md) for the full version history. The latest release is **1.1.0**.
+
 ## License
 
 Released under the MIT License. See the [`LICENSE`](LICENSE) file for details.
